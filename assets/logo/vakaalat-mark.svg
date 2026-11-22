@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="Vakaalat Monogram">
+  <title>Vakaalat</title>
+  <rect width="128" height="128" rx="20" fill="#09111E"/>
+  <g color="#FAF8F4">
+    <!-- Short Shirorekha -->
+    <path d="M18 38 L110 38 L106 44 L22 44 Z" fill="currentColor"/>
+    <!-- Finial & Pivot -->
+    <path d="M64 12 L70 24 L64 31 L58 24 Z" fill="currentColor"/>
+    <circle cx="64" cy="34" r="2.8" fill="currentColor"/>
+    <!-- Central Pillar -->
+    <path d="M60.5 44 L67.5 44 L67.5 100 L76 108 L52 108 L60.5 100 Z" fill="currentColor"/>
+    <!-- Balance Beam -->
+    <path d="M30 62 Q64 51 98 62 L97 65 Q64 55 31 65 Z" fill="currentColor"/>
+    <!-- Left Pan -->
+    <path d="M32 63 L22 89 M32 63 L42 89" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M19 89 L45 89 C44 97 38 101 32 101 C26 101 20 97 19 89 Z" fill="currentColor"/>
+    <!-- Right Pan -->
+    <path d="M96 63 L86 89 M96 63 L106 89" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M83 89 L109 89 C108 97 102 101 96 101 C90 101 84 97 83 89 Z" fill="currentColor"/>
+  </g>
+</svg>

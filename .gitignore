@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment secrets (NEVER commit API keys!)
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# Local SQLite database files
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+
+# Local experience logs
+backend/experience/*.jsonl
+
+# OS & Editor files
+.DS_Store
+*.log

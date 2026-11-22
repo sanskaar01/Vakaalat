@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 155" fill="none" role="img" aria-label="Vakaalat Logo">
+  <title>वकालत — VAKAALAT</title>
+  <!-- Bold Architectural Shirorekha -->
+  <path d="M24 32 L436 32 L428 41 L32 41 Z" fill="currentColor"/>
+
+  <!-- Finial & Pivot -->
+  <path d="M164 4 L171 18 L164 26 L157 18 Z" fill="currentColor"/>
+  <circle cx="164" cy="29" r="3.2" fill="currentColor"/>
+
+  <!-- Bold Letter व (Va) -->
+  <path d="M92 41 L104 41 L104 106 C104 110 107 112 110 113 L90 113 C90 107 90 99 90 92 C83 100 73 104 62 104 C44 104 33 92 33 77 C33 61 45 50 63 50 C73 50 83 55 90 62 L90 41 Z M65 60 C53 60 45 67 45 77 C45 87 53 94 65 94 C77 94 86 87 86 77 C86 67 77 60 65 60 Z" fill="currentColor"/>
+
+  <!-- Geometric Weighing Scale (क) -->
+  <path d="M159 41 L169 41 L169 102 L180 112 L148 112 L159 102 Z" fill="currentColor"/>
+  <path d="M123 61 Q164 47 205 61 L204 65 Q164 53 124 65 Z" fill="currentColor"/>
+  <path d="M126 62 L114 91 M126 62 L138 91" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M111 91 L141 91 C140 100 133 104 126 104 C119 104 112 100 111 91 Z" fill="currentColor"/>
+  <path d="M202 62 L190 91 M202 62 L214 91" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M187 91 L217 91 C216 100 209 104 202 104 C195 104 188 100 187 91 Z" fill="currentColor"/>
+
+  <!-- Bold Aa-matra (ा) -->
+  <path d="M234 41 L247 41 L247 105 C247 110 249 112 253 113 L232 113 C234 110 234 107 234 102 Z" fill="currentColor"/>
+
+  <!-- Bold Letter ल (La) -->
+  <path d="M322 41 L335 41 L335 105 C335 110 337 112 341 113 L320 113 C322 110 322 107 322 102 L322 69 C315 63 308 63 302 69 C299 72 297 76 296 81 C292 74 287 70 280 70 C272 70 267 76 267 84 C267 94 275 103 288 111 C272 109 255 98 255 81 C255 67 265 57 279 57 C288 57 295 61 299 68 C305 59 313 55 322 57 Z" fill="currentColor"/>
+
+  <!-- Bold Letter त (Ta) -->
+  <path d="M402 41 L415 41 L415 105 C415 110 417 112 421 113 L400 113 C402 110 402 107 402 102 L402 69 L374 69 C366 69 360 75 360 84 C360 94 368 103 381 111 C364 109 348 98 348 81 C348 67 358 58 374 58 L402 58 Z" fill="currentColor"/>
+
+  <!-- Bold Minimal Editorial Sub-wordmark -->
+  <text x="230" y="144" text-anchor="middle" fill="currentColor" font-family="'Cinzel', 'Cormorant Garamond', Georgia, serif" font-size="21" font-weight="700" letter-spacing="13">VAKAALAT</text>
+</svg>

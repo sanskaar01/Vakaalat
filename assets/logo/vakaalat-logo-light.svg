@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 140" fill="none" role="img" aria-label="Vakaalat Logo (Light Background)">
+  <title>वकालत — VAKAALAT</title>
+  <g color="#09111E">
+    <path d="M22 34 L398 34 L392 41 L28 41 Z" fill="currentColor"/>
+    <path d="M150 6 L156 19 L150 26 L144 19 Z" fill="currentColor"/>
+    <circle cx="150" cy="30" r="3" fill="currentColor"/>
+    <path d="M88 41 L97 41 L97 104 C97 107 99 109 102 110 L86 110 C86 105 86 98 86 91 C80 98 71 102 62 102 C46 102 36 91 36 77 C36 62 47 52 63 52 C72 52 80 56 86 63 L86 41 Z M65 61 C54 61 47 68 47 77 C47 86 54 93 65 93 C75 93 83 86 83 77 C83 68 75 61 65 61 Z" fill="currentColor"/>
+    <path d="M146 41 L154 41 L154 100 L163 108 L137 108 L146 100 Z" fill="currentColor"/>
+    <path d="M114 60 Q150 48 186 60 L185 63 Q150 53 115 63 Z" fill="currentColor"/>
+    <path d="M116 61 L106 88 M116 61 L126 88" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M103 88 L129 88 C128 96 122 100 116 100 C110 100 104 96 103 88 Z" fill="currentColor"/>
+    <path d="M184 61 L174 88 M184 61 L194 88" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M171 88 L197 88 C196 96 190 100 184 100 C178 100 172 96 171 88 Z" fill="currentColor"/>
+    <path d="M214 41 L225 41 L225 103 C225 107 227 109 230 110 L212 110 C214 108 214 105 214 101 Z" fill="currentColor"/>
+    <path d="M294 41 L305 41 L305 103 C305 107 307 109 310 110 L292 110 C294 108 294 105 294 101 L294 69 C288 64 282 64 277 69 C274 72 272 76 271 80 C268 74 263 70 257 70 C250 70 245 76 245 83 C245 92 252 101 264 108 C250 106 235 96 235 80 C235 67 244 58 256 58 C264 58 270 62 274 68 C279 60 286 56 294 58 Z" fill="currentColor"/>
+    <path d="M366 41 L377 41 L377 103 C377 107 379 109 382 110 L364 110 C366 108 366 105 366 101 L366 69 L341 69 C334 69 329 75 329 83 C329 92 336 101 348 108 C333 106 319 96 319 80 C319 67 328 59 341 59 L366 59 Z" fill="currentColor"/>
+    <text x="210" y="132" text-anchor="middle" fill="currentColor" font-family="'Cormorant Garamond', Georgia, serif" font-size="16" font-weight="600" letter-spacing="10">VAKAALAT</text>
+  </g>
+</svg>

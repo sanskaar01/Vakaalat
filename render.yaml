@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: vakaalat
+    runtime: node
+    plan: free
+    buildCommand: npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && npm run build --prefix backend
+    startCommand: npm run start --prefix backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
