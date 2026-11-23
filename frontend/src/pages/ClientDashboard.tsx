@@ -15,6 +15,7 @@ import { JollyTypewriter } from '../components/JollyTypewriter';
 import { XpFolderIcon, XpNotepadIcon, XpScalesIcon, XpWindow } from '../components/XpIcons';
 import { useApp } from '../context/AppContext';
 import { apiFetch } from '../lib/api';
+import { ClickableBlurredText, translateCategory } from '../lib/i18n';
 
 interface DiaryComment {
   id: string;
@@ -39,7 +40,7 @@ interface ClientThread {
 const CATEGORIES = ['Theft & Cyber', 'Marital', 'Criminal', 'Property', 'Consumer', 'Labour', 'Financial'];
 
 export const ClientDashboard: React.FC = () => {
-  const { user, token, t } = useApp();
+  const { user, token, lang, t } = useApp();
   const [myThreads, setMyThreads] = useState<ClientThread[]>([]);
   const [selectedFile, setSelectedFile] = useState<ClientThread | null>(null);
   const [showPublicPreview, setShowPublicPreview] = useState(false);
@@ -98,7 +99,8 @@ export const ClientDashboard: React.FC = () => {
       setStatusMsg(
         t(
           'File saved to your Personal Diary Desktop & lodged anonymously in the Court of People!',
-          'File aapke Personal Diary Desktop par save ho gayi aur Court of People mein post ho gayi!'
+          'File aapke Personal Diary Desktop par save ho gayi aur Court of People mein post ho gayi!',
+          'फ़ाइल आपकी गुप्त डायरी में सेव हो गई है और जनता की अदालत में दर्ज कर दी गई है!'
         )
       );
       loadMine();
@@ -111,12 +113,14 @@ export const ClientDashboard: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 space-y-6">
-      {/* WINDOWS XP NOTEBOOK DESKTOP */}
       <XpWindow
-        title={`Personal_Diary_Desktop — ${user?.stageName || 'Citizen'} (My Legal Files)`}
+        title={t(
+          `Personal_Diary_Desktop — ${user?.stageName || 'Citizen'} (My Legal Files)`,
+          `Personal_Diary_Desktop — ${user?.stageName || 'Nagrik'} (Meri Kanooni Files)`,
+          `मेरी_गुप्त_डायरी — ${user?.stageName || 'नागरिक'} (मेरी कानूनी फ़ाइलें)`
+        )}
         icon={<XpFolderIcon className="h-4 w-4 shrink-0" />}
       >
-        {/* Desktop Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-[var(--xp-panel-bg)] px-4 py-2.5">
           <div className="text-xs font-bold text-[var(--text-primary)]">
             C:\Users\{user?.stageName?.replace(/\s+/g, '_') || 'Citizen'}\Personal_Diary\
@@ -124,23 +128,26 @@ export const ClientDashboard: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setShowJolly((v) => !v)} className="xp-btn px-3 py-1.5 text-xs">
               <Terminal className="h-3.5 w-3.5" />
-              <span>{showJolly ? 'Close Legal Engine' : 'Open Legal Engine'}</span>
+              <span>
+                {showJolly
+                  ? t('Close Legal Engine', 'Engine Band Karein', 'लीगल इंजन बंद करें')
+                  : t('Open Legal Engine', 'Legal Engine Kholein', 'लीगल इंजन खोलें')}
+              </span>
             </button>
             <button
               onClick={() => setComposerOpen((v) => !v)}
               className="xp-btn xp-btn-start px-3 py-1.5 text-xs"
             >
               <MessageSquarePlus className="h-3.5 w-3.5" />
-              <span>New Complaint File</span>
+              <span>{t('New Complaint File', 'Nayi Complaint File', 'नई शिकायत फ़ाइल')}</span>
             </button>
             <Link to="/court" className="xp-btn xp-btn-primary px-3 py-1.5 text-xs">
               <XpScalesIcon className="h-3.5 w-3.5" />
-              <span>Court of People</span>
+              <span>{t('Court of People', 'Janta Ki Adalat', 'जनता की अदालत')}</span>
             </Link>
           </div>
         </div>
 
-        {/* Desktop Icon Grid (Notebook / File Icons) */}
         <div className="min-h-[260px] p-6">
           {statusMsg && (
             <div className="mb-4 rounded border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
@@ -152,16 +159,28 @@ export const ClientDashboard: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-14 text-center space-y-3">
               <XpFolderIcon className="h-14 w-14 opacity-60" />
               <p className="text-sm font-bold text-[var(--text-primary)]">
-                Your Personal Diary Desktop is empty.
+                {t(
+                  'Your Personal Diary Desktop is empty.',
+                  'Aapka Personal Diary Desktop abhi khaali hai.',
+                  'आपकी गुप्त डायरी का डेस्कटॉप अभी खाली है।'
+                )}
               </p>
               <p className="max-w-md text-xs font-medium text-[var(--text-secondary)]">
-                Click &ldquo;New Complaint File&rdquo; above or analyze an incident in the Legal Engine to create your first anonymous file.
+                {t(
+                  'Click "New Complaint File" above or analyze an incident in the Legal Engine to create your first anonymous file.',
+                  'Upar "Nayi Complaint File" par click karein ya Legal Engine mein apni baat likhein.',
+                  'ऊपर "नई शिकायत फ़ाइल" पर क्लिक करें या लीगल इंजन में अपनी घटना का विश्लेषण करें।'
+                )}
               </p>
             </div>
           ) : (
             <div>
               <p className="mb-4 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                Click any file icon to open your lodged complaint, likes & advocate comments:
+                {t(
+                  'Click any file icon to open your lodged complaint, likes & advocate comments:',
+                  'Kisi bhi file icon par click karke apni complaint, likes aur wakeelon ke comments dekhein:',
+                  'अपनी शिकायत, लाइक्स और वकीलों की टिप्पणियां देखने के लिए किसी भी फ़ाइल आइकन पर क्लिक करें:'
+                )}
               </p>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {myThreads.map((file) => {
@@ -190,7 +209,7 @@ export const ClientDashboard: React.FC = () => {
                         {file.title}
                       </span>
                       <span className="mt-1 font-mono text-[10px] font-semibold text-[var(--text-secondary)]">
-                        {file.category} • {file.upvotes} likes
+                        {translateCategory(file.category, lang)} • {file.upvotes} {t('likes', 'likes', 'लाइक्स')}
                       </span>
                     </button>
                   );
@@ -201,19 +220,26 @@ export const ClientDashboard: React.FC = () => {
         </div>
 
         <div className="xp-statusbar">
-          <span>{myThreads.length} file(s) in Personal Diary</span>
-          <span>Double-click or tap any file to inspect comments & likes</span>
+          <span>
+            {myThreads.length} {t('file(s) in Personal Diary', 'files Personal Diary mein', 'फ़ाइलें गुप्त डायरी में')}
+          </span>
+          <span>
+            {t(
+              'Click any file to inspect comments & likes',
+              'Comments aur likes dekhne ke liye file par click karein',
+              'टिप्पणियां और लाइक्स देखने के लिए किसी भी फ़ाइल पर क्लिक करें'
+            )}
+          </span>
         </div>
       </XpWindow>
 
-      {/* OPENED FILE NOTEBOOK WINDOW */}
       {selectedFile && (
         <div className="xp-window shadow-2xl">
           <div className="xp-titlebar">
             <div className="flex items-center gap-2 min-w-0">
               <XpNotepadIcon className="h-4 w-4 shrink-0" />
               <span className="truncate text-xs font-bold">
-                {selectedFile.title} — Notebook Case File
+                {selectedFile.title} — {t('Notebook Case File', 'Notebook Case File', 'नोटबुक केस फ़ाइल')}
               </span>
             </div>
             <button
@@ -226,19 +252,18 @@ export const ClientDashboard: React.FC = () => {
           </div>
 
           <div className="p-6 space-y-5">
-            {/* File Meta + Likes + Public Blur Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3.5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="xp-panel px-2.5 py-0.5 text-xs font-bold text-[var(--text-accent)]">
-                  {selectedFile.category}
+                  {translateCategory(selectedFile.category, lang)}
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text-primary)]">
                   <ThumbsUp className="h-3.5 w-3.5 text-[var(--text-accent)]" />
-                  {selectedFile.upvotes} Likes
+                  {selectedFile.upvotes} {t('Likes', 'Likes', 'लाइक्स')}
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text-primary)]">
                   <MessageSquare className="h-3.5 w-3.5 text-[var(--text-accent)]" />
-                  {selectedFile.comments.length} Comments
+                  {selectedFile.comments.length} {t('Comments', 'Comments', 'टिप्पणियां')}
                 </span>
               </div>
 
@@ -248,11 +273,14 @@ export const ClientDashboard: React.FC = () => {
                 className={`xp-btn px-3 py-1 text-xs ${showPublicPreview ? 'xp-btn-gold' : ''}`}
               >
                 {showPublicPreview ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                <span>{showPublicPreview ? 'Showing Public Blurred View' : 'Showing Your Private Diary'}</span>
+                <span>
+                  {showPublicPreview
+                    ? t('Showing Public Blurred View', 'Public Blurred View', 'सार्वजनिक धुंधला (Blur) रूप')
+                    : t('Showing Your Private Diary', 'Private Diary View', 'आपकी निजी डायरी का रूप')}
+                </span>
               </button>
             </div>
 
-            {/* Lined Notebook Paper Content */}
             <div
               className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-5 shadow-inner"
               style={{
@@ -263,18 +291,29 @@ export const ClientDashboard: React.FC = () => {
             >
               <h2 className="text-lg font-bold text-[var(--text-primary)]">{selectedFile.title}</h2>
               <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
-                {showPublicPreview ? selectedFile.maskedContent : selectedFile.rawContent}
+                {showPublicPreview ? (
+                  <ClickableBlurredText text={selectedFile.maskedContent} />
+                ) : (
+                  selectedFile.rawContent
+                )}
               </p>
             </div>
 
-            {/* Comments Received on This Complaint */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                Advocate & Community Comments ({selectedFile.comments.length})
+                {t(
+                  `Advocate & Community Comments (${selectedFile.comments.length})`,
+                  `Wakeelon Aur Logon Ke Comments (${selectedFile.comments.length})`,
+                  `वकीलों एवं नागरिकों की टिप्पणियां (${selectedFile.comments.length})`
+                )}
               </h3>
               {selectedFile.comments.length === 0 ? (
                 <div className="xp-panel p-4 text-xs font-medium text-[var(--text-secondary)]">
-                  No comments yet. Verified Kanpur advocates and citizens in the Court of People can reply here soon.
+                  {t(
+                    'No comments yet. Verified Kanpur advocates and citizens in the Court of People can reply here soon.',
+                    'Abhi koi comment nahi hai. Jald hi verified wakeel yahan jawab denge.',
+                    'अभी कोई टिप्पणी नहीं है। जनता की अदालत में सत्यापित वकील जल्द ही यहाँ मार्गदर्शन देंगे।'
+                  )}
                 </div>
               ) : (
                 selectedFile.comments.map((c) => (
@@ -297,7 +336,7 @@ export const ClientDashboard: React.FC = () => {
                         {c.authorStageName}{' '}
                         {c.authorRole === 'lawyer' && (
                           <span className="ml-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:text-emerald-400">
-                            Advocate
+                            {t('Advocate', 'Advocate', 'अधिवक्ता')}
                           </span>
                         )}
                       </span>
@@ -321,13 +360,21 @@ export const ClientDashboard: React.FC = () => {
 
       {composerOpen && (
         <XpWindow
-          title="New_Complaint_File.txt — Lodge in Court of People"
+          title={t(
+            'New_Complaint_File.txt — Lodge in Court of People',
+            'New_Complaint_File.txt — Court of People Mein Lodge Karein',
+            'नई_शिकायत_फ़ाइल.txt — जनता की अदालत में दर्ज करें'
+          )}
           icon={<XpNotepadIcon className="h-4 w-4 shrink-0" />}
         >
           <form onSubmit={handlePublish} className="p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                Create New Diary File & Lodge Publicly
+                {t(
+                  'Create New Diary File & Lodge Publicly',
+                  'Nayi Diary File Banayein & Public Mein Lodge Karein',
+                  'नई डायरी फ़ाइल बनाएं और सार्वजनिक रूप से दर्ज करें'
+                )}
               </h2>
 
               <button
@@ -336,13 +383,19 @@ export const ClientDashboard: React.FC = () => {
                 className={`xp-btn px-3 py-1.5 text-xs ${previewDraftMasked ? 'xp-btn-gold' : ''}`}
               >
                 {previewDraftMasked ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                <span>{previewDraftMasked ? 'Public Blurred Preview ON' : 'Preview Public View'}</span>
+                <span>
+                  {previewDraftMasked
+                    ? t('Public Blurred Preview ON', 'Blurred Preview ON', 'सार्वजनिक धुंधला रूप चालू')
+                    : t('Preview Public View', 'Public View Dekhein', 'सार्वजनिक रूप देखें')}
+                </span>
               </button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">Category</label>
+                <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
+                  {t('Category', 'Category', 'श्रेणी')}
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -350,20 +403,24 @@ export const ClientDashboard: React.FC = () => {
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {c}
+                      {translateCategory(c, lang)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                  File Caption / Headline
+                  {t('File Caption / Headline', 'File Caption / Headline', 'फ़ाइल का शीर्षक')}
                 </label>
                 <input
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., PAN card stolen near Naveen Market"
+                  placeholder={t(
+                    'e.g., PAN card stolen near Naveen Market',
+                    'jaise: Naveen Market ke paas PAN card chori',
+                    'जैसे: नवीन मार्केट के पास पैन कार्ड चोरी'
+                  )}
                   className="xp-input w-full px-3 py-2 text-xs font-medium"
                 />
               </div>
@@ -373,9 +430,15 @@ export const ClientDashboard: React.FC = () => {
               <div className="xp-panel p-4 text-sm font-medium leading-relaxed text-[var(--text-primary)]">
                 <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>Exact Public View (Posted as {user?.stageName})</span>
+                  <span>
+                    {t('Exact Public View (Click blurred tags to test funny numbers)', 'Public View (Blurred tags par click karein)', 'सार्वजनिक रूप (धुंधले टैग पर क्लिक करके जांचें)')}
+                  </span>
                 </div>
-                <p>{computeClientMaskPreview(rawContent || 'Write your incident first to preview...')}</p>
+                <p>
+                  <ClickableBlurredText
+                    text={computeClientMaskPreview(rawContent || 'Write your incident first to preview...')}
+                  />
+                </p>
               </div>
             ) : (
               <textarea
@@ -383,18 +446,26 @@ export const ClientDashboard: React.FC = () => {
                 rows={5}
                 value={rawContent}
                 onChange={(e) => setRawContent(e.target.value)}
-                placeholder="Write freely in your notebook. Real amounts, PAN numbers, and your name are masked automatically in public..."
+                placeholder={t(
+                  'Write freely in your notebook. Real amounts, PAN numbers, and your name are masked automatically in public...',
+                  'Apni notebook mein khulkar likhein. Asli naam aur paise public mein apne aap blur ho jayenge...',
+                  'अपनी नोटबुक में खुलकर लिखें। आपका असली नाम, पैन नंबर और पैसों की राशि सार्वजनिक पोस्ट में अपने आप धुंधली (Blur) हो जाएगी...'
+                )}
                 className="xp-input w-full p-3 text-sm font-medium leading-relaxed"
               />
             )}
 
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setComposerOpen(false)} className="xp-btn px-4 py-2 text-xs">
-                Cancel
+                {t('Cancel', 'Radd Karein', 'रद्द करें')}
               </button>
               <button type="submit" disabled={posting} className="xp-btn xp-btn-start px-5 py-2 text-xs">
                 <Send className="h-3.5 w-3.5" />
-                <span>{posting ? 'Saving...' : 'Save File & Lodge Anonymously'}</span>
+                <span>
+                  {posting
+                    ? t('Saving...', 'Save ho raha hai...', 'सेव हो रहा है...')
+                    : t('Save File & Lodge Anonymously', 'Save & Lodge Karein', 'फ़ाइल सेव करें और गुप्त रूप से दर्ज करें')}
+                </span>
               </button>
             </div>
           </form>

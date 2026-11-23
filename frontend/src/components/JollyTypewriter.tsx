@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { apiFetch } from '../lib/api';
+import { translateCategory } from '../lib/i18n';
 import { MoonPhaseLoader, SolutionSideArrow } from './BlissScenicBackdrop';
 import { XpNotepadIcon, XpShieldIcon, XpWindow } from './XpIcons';
 
@@ -93,7 +94,6 @@ export const JollyTypewriter: React.FC = () => {
   const [error, setError] = useState('');
   const [needsKey, setNeedsKey] = useState(false);
 
-  // AI Draft & Publish Modal state
   const [draftingPost, setDraftingPost] = useState(false);
   const [draftModalOpen, setDraftModalOpen] = useState(false);
   const [draftEditing, setDraftEditing] = useState(false);
@@ -129,7 +129,13 @@ export const JollyTypewriter: React.FC = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError(t('Voice input works in Chrome/Edge. Please type your story.', 'Voice input Chrome/Edge mein chalta hai.'));
+      setError(
+        t(
+          'Voice input works in Chrome/Edge. Please type your story.',
+          'Voice input Chrome/Edge mein chalta hai. Kripya type karein.',
+          'वॉइस इनपुट Chrome/Edge में काम करता है। कृपया अपनी कहानी टाइप करें।'
+        )
+      );
       return;
     }
 
@@ -141,7 +147,7 @@ export const JollyTypewriter: React.FC = () => {
 
     setError('');
     const recognition = new SpeechRecognition();
-    recognition.lang = lang === 'hinglish' ? 'hi-IN' : 'en-IN';
+    recognition.lang = lang === 'en' ? 'en-IN' : 'hi-IN';
     recognition.interimResults = true;
     recognition.continuous = true;
     recognition.onresult = (event: any) => {
@@ -162,7 +168,13 @@ export const JollyTypewriter: React.FC = () => {
     e?.preventDefault();
     const text = query.trim();
     if (text.length < 8) {
-      setError(t('Please share a few words about what happened so we can examine it with care.', 'Kripya thoda vistaar se batayein kya hua.'));
+      setError(
+        t(
+          'Please share a few words about what happened so we can examine it with care.',
+          'Kripya thoda vistaar se batayein kya hua.',
+          'कृपया थोड़ा विस्तार से बताएं कि क्या हुआ ताकि हम सही जांच कर सकें।'
+        )
+      );
       return;
     }
 
@@ -227,7 +239,6 @@ export const JollyTypewriter: React.FC = () => {
       setDraftEditing(false);
       setDraftModalOpen(true);
     } catch (err: any) {
-      // Fallback to clean pre-filled draft modal if drafting call fails
       setDraftTitle(result.suggestedPostTitle);
       setDraftBody(result.draftPostRaw);
       setDraftCategory(result.detectedCategory);
@@ -241,11 +252,16 @@ export const JollyTypewriter: React.FC = () => {
 
   const handlePublishDraftLive = async () => {
     if (!draftTitle.trim() || draftBody.trim().length < 15) {
-      setDraftError('Please make sure your post has a headline and at least a short description.');
+      setDraftError(
+        t(
+          'Please make sure your post has a headline and at least a short description.',
+          'Kripya headline aur thoda vivaran zaroor likhein.',
+          'कृपया सुनिश्चित करें कि आपकी पोस्ट में शीर्षक और विवरण मौजूद है।'
+        )
+      );
       return;
     }
 
-    // If not logged in yet, save the AI-drafted post and send to quick OTP signup
     if (!user || !token) {
       sessionStorage.setItem(
         'vakaalat_pending_draft',
@@ -293,7 +309,11 @@ export const JollyTypewriter: React.FC = () => {
 
   return (
     <XpWindow
-      title="Vakaalat_Legal_Engine.exe — Live Constitutional & First-Aid Analysis"
+      title={t(
+        'Vakaalat_Legal_Engine.exe — Live Constitutional & First-Aid Analysis',
+        'Vakaalat_Legal_Engine.exe — Live Kanooni & First-Aid Analysis',
+        'वकालत_लीगल_इंजन.exe — लाइव संवैधानिक एवं फर्स्ट-एड विश्लेषण'
+      )}
       icon={<XpNotepadIcon className="h-4 w-4 shrink-0" />}
       className="mx-auto w-full max-w-4xl"
     >
@@ -304,7 +324,8 @@ export const JollyTypewriter: React.FC = () => {
             <span>
               {t(
                 'Private First-Aid Legal Engine — Every story is examined live with care & respect.',
-                'Private Legal Engine — Har kahani ko live aur poori izzat ke saath samjha jaata hai.'
+                'Private Legal Engine — Har kahani ko live aur poori izzat ke saath samjha jaata hai.',
+                'प्राइवेट फर्स्ट-एड लीगल इंजन — हर घटना की लाइव, सम्मान और संवेदनशीलता के साथ जांच की जाती है।'
               )}
             </span>
           </div>
@@ -316,20 +337,29 @@ export const JollyTypewriter: React.FC = () => {
               className={`xp-btn px-2.5 py-1 text-[11px] ${showHistory ? 'xp-btn-primary' : ''}`}
             >
               <History className="h-3.5 w-3.5" />
-              <span>Saved History ({history.length})</span>
+              <span>
+                {t('Saved History', 'Saved History', 'पुराना इतिहास')} ({history.length})
+              </span>
             </button>
           )}
         </div>
 
-        {/* 1-Click Reopen Saved History for Logged-in Users */}
         {user && showHistory && (
           <div className="xp-panel p-3.5 space-y-2">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-              Click any past prompt to reopen its saved 4-pillar response instantly (0 extra tokens):
+              {t(
+                'Click any past prompt to reopen its saved 4-pillar response instantly:',
+                'Kisi bhi purani prompt par click karke uska 4-pillar jawab turant kholein:',
+                'किसी भी पुराने मामले पर क्लिक करके उसका 4-स्तंभ विश्लेषण तुरंत खोलें:'
+              )}
             </div>
             {history.length === 0 ? (
               <p className="text-xs text-[var(--text-secondary)]">
-                No saved history yet. Submit a story below and it will be saved safely to your account.
+                {t(
+                  'No saved history yet. Submit a story below and it will be saved safely to your account.',
+                  'Abhi koi history nahi hai. Neeche apni baat likhein, woh safe rahegi.',
+                  'अभी कोई इतिहास नहीं है। नीचे अपनी कहानी लिखें, वह आपके अकाउंट में सुरक्षित रहेगी।'
+                )}
               </p>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
@@ -344,9 +374,11 @@ export const JollyTypewriter: React.FC = () => {
                     }}
                     className="xp-btn flex-col items-start p-2.5 text-left"
                   >
-                    <span className="line-clamp-1 text-xs font-bold">{item.analysis.suggestedPostTitle || item.query}</span>
+                    <span className="line-clamp-1 text-xs font-bold">
+                      {item.analysis.suggestedPostTitle || item.query}
+                    </span>
                     <span className="font-mono text-[10px] opacity-75">
-                      {item.category} • {new Date(item.createdAt).toLocaleDateString()}
+                      {translateCategory(item.category, lang)} • {new Date(item.createdAt).toLocaleDateString()}
                     </span>
                   </button>
                 ))}
@@ -362,7 +394,8 @@ export const JollyTypewriter: React.FC = () => {
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t(
               'Write your whole story in your own tone. Raw and real.',
-              'Apni poori kahani apne andaaz mein likhein. Bilkul raw aur real.'
+              'Apni poori kahani apne andaaz mein likhein. Bilkul raw aur real.',
+              'अपनी पूरी कहानी अपने शब्दों में लिखें। बिल्कुल सच्ची और बिना किसी झिझक के।'
             )}
             className="xp-input w-full resize-none p-3.5 text-sm font-medium leading-relaxed placeholder:font-bold placeholder:text-[var(--text-secondary)]/70"
           />
@@ -371,7 +404,8 @@ export const JollyTypewriter: React.FC = () => {
             <span className="text-[11px] font-semibold text-[var(--text-secondary)]">
               {t(
                 'Analyzed live against Indian Law & Constitution.',
-                'Seedha Indian Law aur Constitution ke hisaab se live analysis.'
+                'Seedha Indian Law aur Constitution ke hisaab se live analysis.',
+                'भारतीय कानून और संविधान के अनुसार सीधा (Live) विश्लेषण।'
               )}
             </span>
 
@@ -384,7 +418,11 @@ export const JollyTypewriter: React.FC = () => {
                 }`}
               >
                 {recording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                <span>{recording ? t('Stop Mic', 'Rokein') : t('Record Voice', 'Bolein')}</span>
+                <span>
+                  {recording
+                    ? t('Stop Mic', 'Rokein', 'माइक रोकें')
+                    : t('Record Voice', 'Bolein', 'आवाज़ रिकॉर्ड करें')}
+                </span>
               </button>
 
               <button
@@ -395,8 +433,8 @@ export const JollyTypewriter: React.FC = () => {
                 <Send className="h-3.5 w-3.5" />
                 <span>
                   {loading
-                    ? t('Examining Indian Laws...', 'Dhaarein check ho rahi hain...')
-                    : t('Help me out', 'Meri madad karein')}
+                    ? t('Examining Indian Laws...', 'Dhaarein check ho rahi hain...', 'कानूनी धाराओं की जांच हो रही है...')
+                    : t('Help me out', 'Meri madad karein', 'मेरी मदद करें')}
                 </span>
               </button>
             </div>
@@ -411,14 +449,13 @@ export const JollyTypewriter: React.FC = () => {
             </div>
             <p className="font-medium text-[var(--text-primary)] leading-relaxed">
               Add your Gemini API key to <code className="font-mono font-bold">backend/.env</code> as{' '}
-              <code className="font-mono font-bold">GEMINI_API_KEY=your_key_here</code> to activate live 4-pillar legal computation.
+              <code className="font-mono font-bold">GEMINI_API_KEY=your_key_here</code>.
             </p>
           </div>
         )}
 
         {error && !needsKey && <p className="text-xs font-bold text-red-500">{error}</p>}
 
-        {/* Theme-Aware Loader: Rotating Sun in Light Mode | Moon Phases in Dark Mode */}
         {loading && (
           <div className="xp-panel flex flex-col items-center justify-center gap-3 p-6 text-center">
             {theme === 'dark' ? (
@@ -446,45 +483,45 @@ export const JollyTypewriter: React.FC = () => {
             )}
             <div>
               <div className="text-sm font-bold text-[var(--text-primary)]">
-                {t('Carefully examining your story across all 4 pillars...', 'Aapki baat ko 4 pillars par check kiya ja raha hai...')}
+                {t(
+                  'Carefully examining your story across all 4 pillars...',
+                  'Aapki baat ko 4 pillars par check kiya ja raha hai...',
+                  'आपकी कहानी का चारों कानूनी स्तंभों (4 Pillars) पर विश्लेषण किया जा रहा है...'
+                )}
               </div>
               <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
                 {t(
                   'Checking Indian Dhaarein, statutory remedies, seriousness, and official digital portals.',
-                  'Indian Dhaarein, saza, gambhirta aur sarkari portals taiyaar ho rahe hain.'
+                  'Indian Dhaarein, saza, gambhirta aur sarkari portals taiyaar ho rahe hain.',
+                  'भारतीय धाराएं, कानूनी सज़ा, मामले की गंभीरता और सरकारी पोर्टल तैयार किए जा रहे हैं।'
                 )}
               </p>
             </div>
           </div>
         )}
 
-        {/* 4-PILLAR COMPUTED RESULT (Arrows ONLY here, shifted to the sides with short punchy text) */}
         {result && (
           <div className="border-t border-[var(--border-subtle)] pt-3">
-            <SolutionSideArrow label="what the laws say" side="left" />
+            <SolutionSideArrow
+              label={t('what the laws say', 'kanoon kya kehta hai', 'कानून क्या कहता है')}
+              side="left"
+            />
 
-            {/* PILLAR 1: VIOLATIONS & DHAAREIN COUNT */}
+            {/* PILLAR 1 */}
             <div className="xp-panel p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="xp-btn xp-btn-primary px-2.5 py-0.5 text-xs pointer-events-none">
-                    Pillar 1
+                    {t('Pillar 1', 'Pillar 1', 'स्तंभ 1')}
                   </span>
                   <h3 className="text-sm font-bold text-[var(--text-primary)]">
                     {result.pillar1_violations.totalDharasViolated}{' '}
-                    {t('Dhaarein / Legal Provisions Violated', 'Dhaarein / Kanoon Tode Gaye')}
+                    {t('Dhaarein / Legal Provisions Violated', 'Dhaarein / Kanoon Tode Gaye', 'उल्लंघन की गई कानूनी धाराएं')}
                   </h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  {result.fromCache && (
-                    <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-300">
-                      Saved History • 0 tokens
-                    </span>
-                  )}
-                  <span className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--text-accent)]">
-                    {result.detectedCategory}
-                  </span>
-                </div>
+                <span className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--text-accent)]">
+                  {translateCategory(result.detectedCategory, lang)}
+                </span>
               </div>
 
               <p className="text-sm font-semibold leading-relaxed text-[var(--text-primary)]">
@@ -510,23 +547,30 @@ export const JollyTypewriter: React.FC = () => {
               </div>
             </div>
 
-            <SolutionSideArrow label="what that a**hole deserves" side="right" />
+            <SolutionSideArrow
+              label={t('what that a**hole deserves', 'doshee ko kya saza milegi', 'दोषी को क्या सज़ा मिलनी चाहिए')}
+              side="right"
+            />
 
-            {/* PILLAR 2: ACCOUNTABILITY UNDER CONSTITUTION & LAW */}
+            {/* PILLAR 2 */}
             <div className="xp-panel p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="xp-btn xp-btn-gold px-2.5 py-0.5 text-xs pointer-events-none">
-                  Pillar 2
+                  {t('Pillar 2', 'Pillar 2', 'स्तंभ 2')}
                 </span>
                 <h3 className="text-sm font-bold text-[var(--text-primary)]">
-                  {t('What Legal Action the Wrongdoer Faces Under Indian Law', 'Kanoon Ke Hisaab Se Saza Aur Remedies')}
+                  {t(
+                    'What Legal Action the Wrongdoer Faces Under Indian Law',
+                    'Kanoon Ke Hisaab Se Saza Aur Remedies',
+                    'भारतीय कानून के तहत दोषी को क्या सज़ा मिल सकती है'
+                  )}
                 </h3>
               </div>
 
               <div className="grid gap-2.5 sm:grid-cols-3">
                 <div className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    Imprisonment / Jail Time
+                    {t('Imprisonment / Jail Time', 'Jail Ki Saza', 'कारावास / जेल की सज़ा')}
                   </div>
                   <p className="mt-1 text-xs font-bold text-[var(--text-primary)]">
                     {result.pillar2_accountability.jailTime}
@@ -535,7 +579,7 @@ export const JollyTypewriter: React.FC = () => {
 
                 <div className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    Fines & Compensation
+                    {t('Fines & Compensation', 'Jurmana Aur Muavza', 'जुर्माना एवं मुआवज़ा')}
                   </div>
                   <p className="mt-1 text-xs font-bold text-[var(--text-primary)]">
                     {result.pillar2_accountability.finesAndCompensation}
@@ -544,7 +588,7 @@ export const JollyTypewriter: React.FC = () => {
 
                 <div className="rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    Apology / Disciplinary / Other Remedies
+                    {t('Apology / Disciplinary / Other Remedies', 'Maafi / Suspension / Anya Kadam', 'माफी / निलंबन / अन्य कानूनी उपाय')}
                   </div>
                   <p className="mt-1 text-xs font-bold text-[var(--text-primary)]">
                     {result.pillar2_accountability.otherRemedies}
@@ -553,7 +597,10 @@ export const JollyTypewriter: React.FC = () => {
               </div>
             </div>
 
-            <SolutionSideArrow label="what you can do now" side="left" />
+            <SolutionSideArrow
+              label={t('what you can do now', 'ab aap kya kar sakte hain', 'अब आप तुरंत क्या कर सकते हैं')}
+              side="left"
+            />
 
             {/* PILLAR 3 + PILLAR 4 */}
             <div className="space-y-3">
@@ -566,12 +613,13 @@ export const JollyTypewriter: React.FC = () => {
                       <AlertTriangle className="h-4 w-4 shrink-0" />
                     )}
                     <h3 className="text-sm font-extrabold uppercase tracking-wide">
-                      Pillar 3 • Seriousness: {result.pillar3_seriousness.level} ({result.pillar3_seriousness.scoreOutOf10}/10)
+                      {t('Pillar 3 • Seriousness:', 'Pillar 3 • Gambhirta:', 'स्तंभ 3 • मामले की गंभीरता:')}{' '}
+                      {result.pillar3_seriousness.level} ({result.pillar3_seriousness.scoreOutOf10}/10)
                     </h3>
                   </div>
                   {result.pillar3_seriousness.beyondFirstAid && (
                     <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
-                      Beyond First-Aid Alone
+                      {t('Beyond First-Aid Alone', 'Wakeel Ki Zaroorat', 'वकील की सलाह आवश्यक')}
                     </span>
                   )}
                 </div>
@@ -587,10 +635,14 @@ export const JollyTypewriter: React.FC = () => {
               <div className="xp-panel p-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="xp-btn xp-btn-start px-2.5 py-0.5 text-xs pointer-events-none">
-                    Pillar 4
+                    {t('Pillar 4', 'Pillar 4', 'स्तंभ 4')}
                   </span>
                   <h3 className="text-sm font-bold text-[var(--text-primary)]">
-                    {t('Digital First-Aid: Immediate Steps, Portals & Knowledge Guides', 'Digital First-Aid: Steps, Sarkari Portals & YouTube Guides')}
+                    {t(
+                      'Digital First-Aid: Immediate Steps, Portals & Knowledge Guides',
+                      'Digital First-Aid: Steps, Sarkari Portals & YouTube Guides',
+                      'डिजिटल फर्स्ट-एड: तत्काल कदम, सरकारी पोर्टल और यूट्यूब गाइड्स'
+                    )}
                   </h3>
                 </div>
 
@@ -605,7 +657,11 @@ export const JollyTypewriter: React.FC = () => {
 
                 <div>
                   <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    {t('Official Portals (Hover on "i" for step-by-step guide)', 'Sarkari Portals ("i" par hover karein)')}
+                    {t(
+                      'Official Portals (Hover on "i" for step-by-step guide)',
+                      'Sarkari Portals ("i" par hover karein)',
+                      'आधिकारिक सरकारी पोर्टल (स्टेप्स देखने के लिए "i" पर माउस ले जाएं)'
+                    )}
                   </h4>
                   <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {result.pillar4_digitalFirstAid.govPortals.map((portal, idx) => (
@@ -641,7 +697,7 @@ export const JollyTypewriter: React.FC = () => {
                               {hoveredPortal === idx && (
                                 <div className="xp-window absolute bottom-7 right-0 z-30 w-64 text-left shadow-2xl">
                                   <div className="xp-titlebar py-1 px-2 text-[10px] font-bold">
-                                    Steps on this Portal
+                                    {t('Steps on this Portal', 'Is Portal Ke Steps', 'इस पोर्टल पर क्या करें')}
                                   </div>
                                   <ol className="space-y-1 p-2.5 text-[11px] font-medium leading-snug text-[var(--text-primary)]">
                                     {portal.hoverSteps.map((s, si) => (
@@ -682,7 +738,11 @@ export const JollyTypewriter: React.FC = () => {
 
                 <div>
                   <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    {t('YouTube Knowledge Guides (What You Will Learn)', 'YouTube Knowledge Videos (Isme Kya Seekhenge)')}
+                    {t(
+                      'YouTube Knowledge Guides (What You Will Learn)',
+                      'YouTube Knowledge Videos (Isme Kya Seekhenge)',
+                      'यूट्यूब नॉलेज गाइड्स (आप इस वीडियो में क्या सीखेंगे)'
+                    )}
                   </h4>
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {result.youtubeGuidesWithUrls.map((vid, idx) => (
@@ -703,7 +763,9 @@ export const JollyTypewriter: React.FC = () => {
                           <ExternalLink className="h-3.5 w-3.5 shrink-0 text-[var(--text-secondary)]" />
                         </div>
                         <p className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--text-secondary)]">
-                          <strong className="text-[var(--text-primary)]">Trailer: </strong>
+                          <strong className="text-[var(--text-primary)]">
+                            {t('Trailer:', 'Trailer:', 'झलक:')}{' '}
+                          </strong>
                           {vid.trailerText}
                         </p>
                       </a>
@@ -713,16 +775,28 @@ export const JollyTypewriter: React.FC = () => {
               </div>
             </div>
 
-            <SolutionSideArrow label="lodge this complaint in the court of people" side="right" />
+            <SolutionSideArrow
+              label={t(
+                'lodge this complaint in the court of people',
+                'janta ki adalat mein lodge karein',
+                'जनता की अदालत में यह शिकायत दर्ज करें'
+              )}
+              side="right"
+            />
 
             <div className="rounded-md border-2 border-[#2b6be0] bg-[var(--bg-elevated)] p-5 text-center shadow-md space-y-3">
               <h4 className="text-lg font-extrabold tracking-tight text-[var(--text-primary)] sm:text-xl">
-                LODGE THIS COMPLAINT IN THE COURT OF PEOPLE
+                {t(
+                  'LODGE THIS COMPLAINT IN THE COURT OF PEOPLE',
+                  'COURT OF PEOPLE MEIN YEH COMPLAINT LODGE KAREIN',
+                  'इस शिकायत को जनता की अदालत में दर्ज करें'
+                )}
               </h4>
               <p className="mx-auto max-w-xl text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
                 {t(
                   'Create your quick anonymous account (Name, Alias, Phone OTP & Gmail) in 30 seconds. Your real identity stays hidden while verified advocates comment on how they can help.',
-                  'Sirf 30 second mein apna anonymous account banayein (Name, Alias, Phone OTP aur Gmail) aur apni complaint Court of People mein lodge karein.'
+                  'Sirf 30 second mein apna anonymous account banayein (Name, Alias, Phone OTP aur Gmail) aur apni complaint Court of People mein lodge karein.',
+                  'सिर्फ 30 सेकंड में अपना गुप्त अकाउंट बनाएं (नाम, उपनाम, फोन OTP और Gmail)। आपकी असली पहचान छुपी रहेगी और सत्यापित वकील आपकी मदद के लिए टिप्पणी कर सकेंगे।'
                 )}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
@@ -735,14 +809,14 @@ export const JollyTypewriter: React.FC = () => {
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>
                     {draftingPost
-                      ? t('Drafting Your Complaint Post with AI...', 'AI Aapki Post Likh Raha Hai...')
-                      : t('Lodge This Complaint in the Court of People', 'Court of People Mein Lodge Karein')}
+                      ? t('Drafting Your Complaint Post with AI...', 'AI Aapki Post Likh Raha Hai...', 'AI आपकी शिकायत की पोस्ट तैयार कर रहा है...')
+                      : t('Lodge This Complaint in the Court of People', 'Court of People Mein Lodge Karein', 'इस शिकायत को जनता की अदालत में दर्ज करें')}
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <Link to="/leaderboard" className="xp-btn xp-btn-gold px-4 py-2.5 text-xs">
                   <Scale className="h-3.5 w-3.5" />
-                  <span>{t('Find Lawyers Near You', 'Apne Paas Wakeel Khojein')}</span>
+                  <span>{t('Find Lawyers Near You', 'Apne Paas Wakeel Khojein', 'अपने पास के वकील खोजें')}</span>
                 </Link>
               </div>
             </div>
@@ -750,7 +824,6 @@ export const JollyTypewriter: React.FC = () => {
         )}
       </div>
 
-      {/* AI-DRAFTED COMPLAINT PREVIEW & INSTANT PUBLISH MODAL */}
       {draftModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="xp-window w-full max-w-2xl shadow-2xl">
@@ -758,7 +831,11 @@ export const JollyTypewriter: React.FC = () => {
               <div className="flex items-center gap-2">
                 <XpNotepadIcon className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-bold">
-                  AI_Drafted_Complaint.doc — Preview & Publish to Court of People
+                  {t(
+                    'AI_Drafted_Complaint.doc — Preview & Publish to Court of People',
+                    'AI_Drafted_Complaint.doc — Preview & Publish',
+                    'AI_शिकायत_ड्राफ्ट.doc — समीक्षा करें और प्रकाशित करें'
+                  )}
                 </span>
               </div>
               <button
@@ -775,10 +852,14 @@ export const JollyTypewriter: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <span className="rounded bg-[#2b6be0]/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-[var(--text-accent)]">
-                    {draftCategory} • Anonymous Post
+                    {translateCategory(draftCategory, lang)} • {t('Anonymous Post', 'Anonymous Post', 'गुप्त पोस्ट')}
                   </span>
                   <h3 className="mt-1 text-base font-bold text-[var(--text-primary)]">
-                    {t('Your AI-Drafted Court of People Post', 'Aapki AI-Drafted Court of People Post')}
+                    {t(
+                      'Your AI-Drafted Court of People Post',
+                      'Aapki AI-Drafted Court of People Post',
+                      'जनता की अदालत के लिए AI द्वारा तैयार आपकी पोस्ट'
+                    )}
                   </h3>
                 </div>
 
@@ -788,7 +869,11 @@ export const JollyTypewriter: React.FC = () => {
                   className={`xp-btn px-3 py-1.5 text-xs ${draftEditing ? 'xp-btn-gold' : ''}`}
                 >
                   <Edit3 className="h-3.5 w-3.5" />
-                  <span>{draftEditing ? 'Done Editing' : 'Edit Before Posting'}</span>
+                  <span>
+                    {draftEditing
+                      ? t('Done Editing', 'Editing Poori Hui', 'संपादन पूर्ण')
+                      : t('Edit Before Posting', 'Post Se Pehle Edit Karein', 'पोस्ट करने से पहले संपादित करें')}
+                  </span>
                 </button>
               </div>
 
@@ -796,7 +881,7 @@ export const JollyTypewriter: React.FC = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Post Headline
+                      {t('Post Headline', 'Post Headline', 'पोस्ट का शीर्षक')}
                     </label>
                     <input
                       value={draftTitle}
@@ -806,7 +891,7 @@ export const JollyTypewriter: React.FC = () => {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Post Body (Your Sentiments & Facts)
+                      {t('Post Body (Your Sentiments & Facts)', 'Post Vivaran', 'पोस्ट का विवरण (आपकी भावनाएं और तथ्य)')}
                     </label>
                     <textarea
                       rows={6}
@@ -819,9 +904,9 @@ export const JollyTypewriter: React.FC = () => {
               ) : (
                 <div className="xp-panel p-4 space-y-2.5">
                   <div className="text-[11px] font-bold text-[var(--text-secondary)]">
-                    Posting anonymously as:{' '}
+                    {t('Posting anonymously as:', 'Gupt naam:', 'गुप्त नाम से पोस्ट किया जाएगा:')}{' '}
                     <span className="text-blue-700 dark:text-blue-300">
-                      {user?.stageName || 'Your New Anonymous Alias'}
+                      {user?.stageName || t('Your New Anonymous Alias', 'Aapka Naya Gupt Alias', 'आपका नया गुप्त उपनाम')}
                     </span>
                   </div>
                   <h4 className="text-lg font-bold text-[var(--text-primary)]">{draftTitle}</h4>
@@ -839,7 +924,7 @@ export const JollyTypewriter: React.FC = () => {
                   onClick={() => setDraftModalOpen(false)}
                   className="xp-btn px-4 py-2 text-xs"
                 >
-                  Cancel
+                  {t('Cancel', 'Radd Karein', 'रद्द करें')}
                 </button>
 
                 <button
@@ -851,12 +936,12 @@ export const JollyTypewriter: React.FC = () => {
                   <Send className="h-3.5 w-3.5" />
                   <span>
                     {publishingPost
-                      ? 'Publishing Live...'
+                      ? t('Publishing Live...', 'Post Ho Raha Hai...', 'लाइव पोस्ट हो रहा है...')
                       : user
                       ? draftEditing
-                        ? 'Publish Edited Post Live'
-                        : 'Post Without Editing — Make Live!'
-                      : 'Create Account & Post Live!'}
+                        ? t('Publish Edited Post Live', 'Edited Post Live Karein', 'संपादित पोस्ट लाइव करें')
+                        : t('Post Without Editing — Make Live!', 'Bina Edit Kiye Live Post Karein!', 'बिना बदलाव किए सीधे लाइव पोस्ट करें!')
+                      : t('Create Account & Post Live!', 'Account Banayein & Live Post Karein!', 'अकाउंट बनाएं और लाइव पोस्ट करें!')}
                   </span>
                 </button>
               </div>
@@ -868,12 +953,20 @@ export const JollyTypewriter: React.FC = () => {
       <div className="xp-statusbar">
         <span>
           {geminiReady === true
-            ? 'Engine: Connected to Gemini (Live 4-Pillar Computation)'
-            : geminiReady === false
-            ? 'Engine: Awaiting GEMINI_API_KEY in backend/.env'
-            : 'Engine: Checking status...'}
+            ? t(
+                'Engine: Connected to Gemini (Live 4-Pillar Computation)',
+                'Engine: Gemini Se Connected (Live 4-Pillar Analysis)',
+                'इंजन: Gemini से जुड़ा हुआ (लाइव 4-स्तंभ विश्लेषण)'
+              )
+            : t(
+                'Engine: Ready',
+                'Engine: Taiyaar',
+                'इंजन: तैयार'
+              )}
         </span>
-        <span className="font-mono">Self-Learning Experience Store Active</span>
+        <span className="font-mono">
+          {t('Self-Learning Experience Store Active', 'Self-Learning Store Active', 'सेल्फ-लर्निंग सिस्टम सक्रिय')}
+        </span>
       </div>
     </XpWindow>
   );

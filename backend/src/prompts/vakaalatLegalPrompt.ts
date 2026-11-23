@@ -47,10 +47,12 @@ Also include:
 - "detectedCategory": one of ["Theft & Cyber", "Criminal", "Marital", "Property", "Consumer", "Labour", "Financial"]
 - "suggestedPostTitle": a concise, dignified, anonymous headline if they choose to post in the Court of People.`;
 
-export function buildUserLegalPrompt(userStory: string, language: 'en' | 'hinglish'): string {
+export function buildUserLegalPrompt(userStory: string, language: 'en' | 'hi' | 'hinglish'): string {
   const langInstruction =
-    language === 'hinglish'
-      ? 'Write all human-facing explanations in warm, respectful, natural Hinglish (Roman Hindi + English legal terms like Dhaarein/FIR).'
+    language === 'hi'
+      ? 'Write ALL human-facing explanations, titles, compassionateValidation, whyItAppliesToYourStory, jailTime, finesAndCompensation, otherRemedies, explanation, lawyerRecommendation, immediateSteps, portal purpose, hoverSteps, and youtubeKnowledgeGuides trailerText in clear, warm, empathetic Devanagari Hindi (हिंदी). Keep JSON keys and detectedCategory enum in English.'
+      : language === 'hinglish'
+      ? 'Write ALL human-facing explanations, titles, compassionateValidation, whyItAppliesToYourStory, jailTime, finesAndCompensation, otherRemedies, explanation, lawyerRecommendation, immediateSteps, portal purpose, hoverSteps, and youtubeKnowledgeGuides trailerText in warm, respectful, natural Hinglish (Roman Hindi + English legal terms like Dhaarein/FIR). Keep JSON keys and detectedCategory enum in English.'
       : 'Write all human-facing explanations in warm, clear, respectful English (using Indian legal terms like Dhaarein where natural).';
 
   return `${langInstruction}

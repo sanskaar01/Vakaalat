@@ -20,14 +20,14 @@ export const jollyRouter = Router();
 
 const chatSchema = z.object({
   query: z.string().min(8, 'Please describe what happened in a few words so we can examine it properly.'),
-  language: z.enum(['en', 'hinglish']).default('en'),
+  language: z.enum(['en', 'hi', 'hinglish']).default('en'),
 });
 
 const draftSchema = z.object({
   userStory: z.string().min(8),
   category: z.string().min(2),
   dharas: z.array(z.string()).default([]),
-  language: z.enum(['en', 'hinglish']).default('en'),
+  language: z.enum(['en', 'hi', 'hinglish']).default('en'),
 });
 
 jollyRouter.get('/status', (_req, res) => {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
+import { HINDI_DICTIONARY, LangMode } from '../lib/i18n';
 
 export interface User {
   id: string;
@@ -12,17 +13,14 @@ export interface User {
 }
 
 type ThemeMode = 'light' | 'dark';
-type LangMode = 'en' | 'hinglish';
 
 interface AppContextValue {
   theme: ThemeMode;
-  autoThemeLabel: string;
   toggleTheme: () => void;
   lang: LangMode;
+  setLang: (mode: LangMode) => void;
   toggleLang: () => void;
-  t: (en: string, hinglish: string) => string;
-  maskMode: boolean;
-  toggleMaskMode: () => void;
+  t: (en: string, hinglish?: string, hi?: string) => string;
   isComputing: boolean;
   setIsComputing: (v: boolean) => void;
   scenicActive: boolean;
@@ -45,7 +43,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [manualTheme, setManualTheme] = useState<ThemeMode | null>(null);
   const [autoTheme, setAutoTheme] = useState<ThemeMode>(computeTimeBasedTheme);
   const [lang, setLang] = useState<LangMode>('en');
-  const [maskMode, setMaskMode] = useState<boolean>(true);
   const [isComputing, setIsComputing] = useState<boolean>(false);
   const [burstActive, setBurstActive] = useState<boolean>(false);
   const burstTimerRef = React.useRef<number | null>(null);
@@ -59,6 +56,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const scenicActive = isComputing || burstActive;
+
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('vakaalat_token'));
   const [user, setUser] = useState<User | null>(() => {
     const raw = localStorage.getItem('vakaalat_user');
@@ -113,27 +111,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setManualTheme((prev) => ((prev ?? autoTheme) === 'dark' ? 'light' : 'dark'));
   };
 
-  const toggleLang = () => setLang((prev) => (prev === 'en' ? 'hinglish' : 'en'));
-  const toggleMaskMode = () => setMaskMode((prev) => !prev);
-  const t = (en: string, hinglish: string) => (lang === 'hinglish' ? hinglish : en);
+  const toggleLang = () =>
+    setLang((prev) => (prev === 'en' ? 'hi' : prev === 'hi' ? 'hinglish' : 'en'));
 
-  const autoThemeLabel = manualTheme
-    ? `Manual (${theme})`
-    : theme === 'light'
-    ? 'Day Marble (6AM–6PM)'
-    : 'Night Matte (6PM–6AM)';
+  const t = (en: string, hinglish?: string, hi?: string): string => {
+    if (lang === 'en') return en;
+    if (lang === 'hi') {
+      return hi || HINDI_DICTIONARY[en] || hinglish || en;
+    }
+    return hinglish || HINDI_DICTIONARY[en] || en;
+  };
 
   return (
     <AppContext.Provider
       value={{
         theme,
-        autoThemeLabel,
         toggleTheme,
         lang,
+        setLang,
         toggleLang,
         t,
-        maskMode,
-        toggleMaskMode,
         isComputing,
         setIsComputing,
         scenicActive,

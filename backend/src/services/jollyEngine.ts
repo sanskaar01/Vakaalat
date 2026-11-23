@@ -97,7 +97,7 @@ export function isGeminiConfigured(): boolean {
 
 export async function runJollyAssistant(
   userQuery: string,
-  language: 'en' | 'hinglish' = 'en',
+  language: 'en' | 'hi' | 'hinglish' = 'en',
   authorRealName?: string
 ): Promise<ComputedLegalAnalysis> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -230,7 +230,7 @@ export async function draftCourtOfPeoplePost(
   userStory: string,
   category: string,
   dharas: string[],
-  language: 'en' | 'hinglish' = 'en'
+  language: 'en' | 'hi' | 'hinglish' = 'en'
 ): Promise<{ title: string; body: string; category: string }> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
@@ -239,7 +239,9 @@ export async function draftCourtOfPeoplePost(
 
   const ai = new GoogleGenAI({ apiKey });
   const langRule =
-    language === 'hinglish'
+    language === 'hi'
+      ? 'Write both "title" and "body" in natural, heartfelt Devanagari Hindi (हिंदी) in the first person ("मैं/मेरा").'
+      : language === 'hinglish'
       ? 'Write in natural, heartfelt Hinglish (first-person "main/mera").'
       : 'Write in natural, heartfelt first-person English ("I/my").';
 

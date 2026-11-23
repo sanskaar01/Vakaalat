@@ -4,6 +4,7 @@ import { Award, Clock, Eye, Scale, ShieldCheck, ThumbsUp, Users } from 'lucide-r
 import { XpFolderIcon, XpScalesIcon, XpWindow } from '../components/XpIcons';
 import { useApp } from '../context/AppContext';
 import { apiFetch } from '../lib/api';
+import { ClickableBlurredText, translateCategory } from '../lib/i18n';
 
 interface DashboardData {
   profile: {
@@ -38,7 +39,7 @@ interface DashboardData {
 }
 
 export const LawyerDashboard: React.FC = () => {
-  const { token, t } = useApp();
+  const { token, lang, t } = useApp();
   const [data, setData] = useState<DashboardData | null>(null);
   const [activeTab, setActiveTab] = useState<'possible_clients' | 'most_time'>('possible_clients');
   const [error, setError] = useState('');
@@ -61,7 +62,7 @@ export const LawyerDashboard: React.FC = () => {
   if (!data) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center text-sm font-semibold text-[var(--text-secondary)]">
-        {t('Opening Advocate Chambers...', 'Chambers khul rahe hain...')}
+        {t('Opening Advocate Chambers...', 'Chambers khul rahe hain...', 'वकील चैंबर खुल रहा है...')}
       </div>
     );
   }
@@ -71,7 +72,11 @@ export const LawyerDashboard: React.FC = () => {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
       <XpWindow
-        title={`Advocate_Chambers.exe — ${profile.stageName}`}
+        title={t(
+          `Advocate_Chambers.exe — ${profile.stageName}`,
+          `Advocate_Chambers.exe — ${profile.stageName}`,
+          `वकील_चैंबर.exe — ${profile.stageName}`
+        )}
         icon={<XpScalesIcon className="h-4 w-4 shrink-0" />}
       >
         <div className="p-6">
@@ -87,18 +92,21 @@ export const LawyerDashboard: React.FC = () => {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[var(--text-accent)]">
-                    Advocate Chambers
+                    {t('Advocate Chambers', 'Wakeel Chambers', 'वकील चैंबर')}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
                     <ShieldCheck className="h-3 w-3" />
-                    {profile.verificationStatus === 'verified' ? 'Video CV Verified' : 'Under Review'}
+                    {profile.verificationStatus === 'verified'
+                      ? t('Video CV Verified', 'Video CV Verified', 'वीडियो CV सत्यापित')
+                      : t('Under Review', 'Under Review', 'समीक्षाधीन')}
                   </span>
                 </div>
                 <h1 className="mt-0.5 text-2xl font-bold text-[var(--text-primary)]">
                   {profile.stageName}
                 </h1>
                 <p className="text-xs font-medium text-[var(--text-secondary)]">
-                  {profile.college} • {profile.experienceYears} yrs • {profile.city} ({profile.bioLength} char story)
+                  {profile.college} • {profile.experienceYears} {t('yrs', 'saal', 'वर्ष')} • {profile.city} ({profile.bioLength}{' '}
+                  {t('char story', 'char story', 'अक्षरों का परिचय')})
                 </p>
               </div>
             </div>
@@ -107,7 +115,7 @@ export const LawyerDashboard: React.FC = () => {
               <div className="xp-panel px-5 py-3 text-center">
                 <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-accent)]">
                   <Eye className="h-3.5 w-3.5" />
-                  <span>Profile Views</span>
+                  <span>{t('Profile Views', 'Profile Views', 'प्रोफाइल व्यूज')}</span>
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-[var(--text-primary)]">
                   {profile.profileViews.toLocaleString()}
@@ -117,7 +125,7 @@ export const LawyerDashboard: React.FC = () => {
               <div className="xp-panel px-5 py-3 text-center">
                 <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   <ThumbsUp className="h-3.5 w-3.5 text-[var(--text-accent)]" />
-                  <span>Likes</span>
+                  <span>{t('Likes', 'Likes', 'लाइक्स')}</span>
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-[var(--text-primary)]">
                   {profile.totalLikes}
@@ -134,7 +142,9 @@ export const LawyerDashboard: React.FC = () => {
               }`}
             >
               <Users className="h-3.5 w-3.5" />
-              <span>Possible Clients ({possibleClients.length})</span>
+              <span>
+                {t('Possible Clients', 'Possible Clients', 'संभावित क्लाइंट्स')} ({possibleClients.length})
+              </span>
             </button>
 
             <button
@@ -144,12 +154,14 @@ export const LawyerDashboard: React.FC = () => {
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
-              <span>{t('People Who Spent Most Time On You', 'Sabse Zyada Samay Bitane Wale')}</span>
+              <span>
+                {t('People Who Spent Most Time On You', 'Sabse Zyada Samay Bitane Wale', 'आपकी प्रोफाइल पर सबसे अधिक समय बिताने वाले')}
+              </span>
             </button>
 
             <Link to="/leaderboard" className="xp-btn xp-btn-gold px-4 py-2 text-xs">
               <Award className="h-3.5 w-3.5" />
-              <span>{t('View My Leaderboard Rank', 'Leaderboard Rank Dekhein')}</span>
+              <span>{t('View My Leaderboard Rank', 'Leaderboard Rank Dekhein', 'मेरी लीडरबोर्ड रैंक देखें')}</span>
             </Link>
           </div>
         </div>
@@ -159,12 +171,16 @@ export const LawyerDashboard: React.FC = () => {
         {activeTab === 'possible_clients' ? (
           <div className="space-y-4">
             <p className="text-xs font-semibold text-[var(--text-secondary)]">
-              Matched to your domains ({profile.domains.join(', ')}). Answer helpfully in the Court of People to earn likes and climb the Leaderboard.
+              {t(
+                `Matched to your domains (${profile.domains.map((d) => translateCategory(d, lang)).join(', ')}). Answer helpfully in the Court of People to earn likes and climb the Leaderboard.`,
+                `Aapke domains (${profile.domains.map((d) => translateCategory(d, lang)).join(', ')}) se matched matters. Court of People mein madad karke Leaderboard par upar aayein.`,
+                `आपके वकालत क्षेत्रों (${profile.domains.map((d) => translateCategory(d, lang)).join(', ')}) से जुड़े मामले। जनता की अदालत में मददगार जवाब देकर लाइक्स पाएं और लीडरबोर्ड में ऊपर आएं।`
+              )}
             </p>
             {possibleClients.map((thread) => (
               <XpWindow
                 key={thread.id}
-                title={`Possible_Client — ${thread.category}`}
+                title={`${t('Possible_Client', 'Possible_Client', 'संभावित_क्लाइंट')} — ${translateCategory(thread.category, lang)}`}
                 icon={<XpFolderIcon className="h-4 w-4 shrink-0" />}
               >
                 <div className="p-5">
@@ -174,12 +190,12 @@ export const LawyerDashboard: React.FC = () => {
                         {thread.authorStageName}
                       </span>
                       <span className="xp-panel px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--text-accent)]">
-                        {thread.category}
+                        {translateCategory(thread.category, lang)}
                       </span>
                     </div>
                     <Link to="/court" className="xp-btn xp-btn-start px-3 py-1.5 text-xs">
                       <Scale className="h-3 w-3" />
-                      <span>{t('Help in Court of People', 'Jawab Dein')}</span>
+                      <span>{t('Help in Court of People', 'Jawab Dein', 'जनता की अदालत में मदद करें')}</span>
                     </Link>
                   </div>
 
@@ -187,7 +203,7 @@ export const LawyerDashboard: React.FC = () => {
                     {thread.title}
                   </h3>
                   <p className="mt-1 text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
-                    {thread.maskedContent}
+                    <ClickableBlurredText text={thread.maskedContent} />
                   </p>
                 </div>
               </XpWindow>
@@ -195,7 +211,11 @@ export const LawyerDashboard: React.FC = () => {
           </div>
         ) : (
           <XpWindow
-            title="Profile_Reading_Time_Log.csv — Citizens Most Engaged With Your Story"
+            title={t(
+              'Profile_Reading_Time_Log.csv — Citizens Most Engaged With Your Story',
+              'Profile_Reading_Time_Log.csv — Aapki Story Sabse Zyada Der Padhne Wale',
+              'प्रोफाइल_रीडिंग_लॉग.csv — आपकी कहानी सबसे अधिक देर तक पढ़ने वाले नागरिक'
+            )}
             icon={<XpFolderIcon className="h-4 w-4 shrink-0" />}
           >
             <div className="divide-y divide-[var(--border-subtle)]">
@@ -204,14 +224,16 @@ export const LawyerDashboard: React.FC = () => {
                   <div>
                     <div className="font-bold text-blue-700 dark:text-blue-300">{v.visitorStageName}</div>
                     <div className="text-[11px] font-medium text-[var(--text-secondary)]">
-                      Interested in: {v.domainInterest}
+                      {t('Interested in:', 'Kshetra:', 'रुचि का क्षेत्र:')} {translateCategory(v.domainInterest, lang)}
                     </div>
                   </div>
                   <div className="text-right font-mono">
                     <div className="font-bold text-[var(--text-primary)]">
                       {Math.floor(v.secondsSpent / 60)}m {v.secondsSpent % 60}s
                     </div>
-                    <div className="text-[10px] text-[var(--text-secondary)]">reading time</div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">
+                      {t('reading time', 'padhne ka samay', 'पढ़ने का समय')}
+                    </div>
                   </div>
                 </div>
               ))}

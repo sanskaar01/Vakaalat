@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Languages, LogOut, Moon, Sun } from 'lucide-react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { VakaalatLogo } from './VakaalatLogo';
 import { XpFolderIcon, XpScalesIcon, XpTrophyIcon } from './XpIcons';
 
 export const Navbar: React.FC = () => {
-  const { theme, toggleTheme, lang, toggleLang, maskMode, toggleMaskMode, user, logout, t } = useApp();
+  const { theme, toggleTheme, lang, setLang, user, logout, t } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -26,11 +26,11 @@ export const Navbar: React.FC = () => {
           <nav className="hidden items-center gap-2 md:flex">
             <Link to="/court" className={navBtnClass('/court')}>
               <XpScalesIcon className="h-4 w-4" />
-              <span>{t('Court of People', 'Janta Ki Adalat')}</span>
+              <span>{t('Court of People', 'Janta Ki Adalat', 'जनता की अदालत')}</span>
             </Link>
             <Link to="/leaderboard" className={navBtnClass('/leaderboard')}>
               <XpTrophyIcon className="h-4 w-4" />
-              <span>{t('Leaderboard', 'Leaderboard')}</span>
+              <span>{t('Leaderboard', 'Wakeel Leaderboard', 'वकील लीडरबोर्ड')}</span>
             </Link>
             {user && (
               <Link
@@ -40,56 +40,63 @@ export const Navbar: React.FC = () => {
                 <XpFolderIcon className="h-4 w-4" />
                 <span>
                   {user.role === 'lawyer'
-                    ? t('Advocate Chambers', 'Chambers')
-                    : t('Personal Diary', 'Personal Diary')}
+                    ? t('Advocate Chambers', 'Wakeel Chambers', 'वकील चैंबर')
+                    : t('Personal Diary', 'Personal Diary', 'मेरी गुप्त डायरी')}
                 </span>
               </Link>
             )}
           </nav>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Renamed to Blur ON / Blur OFF */}
-          <button
-            onClick={toggleMaskMode}
-            className={`hidden sm:inline-flex xp-btn px-2.5 py-1.5 text-[11px] ${
-              maskMode ? 'xp-btn-gold' : ''
-            }`}
-            title={t(
-              'Blur ON hides sensitive amounts; Blur OFF shows funny representational numbers only',
-              'Blur ON paise chhupata hai; Blur OFF funny representational numbers dikhata hai'
-            )}
-          >
-            {maskMode ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            <span>{maskMode ? 'Blur ON' : 'Blur OFF'}</span>
-          </button>
+        <div className="flex items-center gap-1.5">
+          {/* 3-Language Selector: EN | हिंदी | हिंग्लिश */}
+          <div className="inline-flex rounded border border-[var(--border-subtle)] bg-[var(--xp-panel-bg)] p-0.5">
+            <button
+              type="button"
+              onClick={() => setLang('en')}
+              className={`rounded px-2 py-1 text-[11px] font-bold transition ${
+                lang === 'en' ? 'bg-[#2b6be0] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('hi')}
+              className={`rounded px-2 py-1 text-[11px] font-bold transition ${
+                lang === 'hi' ? 'bg-[#2b6be0] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              हिंदी
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('hinglish')}
+              className={`rounded px-2 py-1 text-[11px] font-bold transition ${
+                lang === 'hinglish' ? 'bg-[#2b6be0] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              हिंग्लिश
+            </button>
+          </div>
 
-          <button
-            onClick={toggleLang}
-            className="xp-btn px-2.5 py-1.5 text-[11px]"
-            title="Switch English / Hinglish"
-          >
-            <Languages className="h-3.5 w-3.5" />
-            <span>{lang === 'en' ? 'EN' : 'हिंग्लिश'}</span>
-          </button>
-
-          {/* Sun / Moon Theme Representative Switch (replaces hanging clock) */}
+          {/* Sun / Moon Theme Switch */}
           <button
             onClick={toggleTheme}
             className={`xp-btn px-2.5 py-1.5 text-[11px] ${
               theme === 'dark' ? 'xp-btn-primary' : 'xp-btn-gold'
             }`}
-            title={theme === 'dark' ? 'Night Galaxy Mode — Click for Day Sun' : 'Day Sun Mode — Click for Night Galaxy'}
+            title={theme === 'dark' ? t('Night Mode', 'Night Mode', 'नाइट मोड') : t('Day Mode', 'Day Mode', 'डे मोड')}
           >
             {theme === 'dark' ? (
               <>
                 <Moon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Moon</span>
+                <span className="hidden sm:inline">{t('Moon', 'Chaand', 'चाँद')}</span>
               </>
             ) : (
               <>
                 <Sun className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sun</span>
+                <span className="hidden sm:inline">{t('Sun', 'Suraj', 'सूरज')}</span>
               </>
             )}
           </button>
@@ -108,14 +115,14 @@ export const Navbar: React.FC = () => {
                   navigate('/');
                 }}
                 className="xp-btn p-1.5 hover:text-red-500"
-                title={t('Sign Out', 'Logout')}
+                title={t('Sign Out', 'Logout', 'लॉग आउट')}
               >
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
           ) : (
             <Link to="/auth" className="xp-btn xp-btn-start px-3.5 py-1.5 text-xs">
-              {t('Sign In', 'Sign In')}
+              {t('Sign In', 'Sign In Karein', 'साइन इन')}
             </Link>
           )}
         </div>

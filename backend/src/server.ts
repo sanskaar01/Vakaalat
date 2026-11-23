@@ -39,18 +39,41 @@ app.get('/api/v1/stats', (_req, res) => {
   res.json({ clients, lawyers, threads, comments });
 });
 
-app.post('/api/v1/feedback', (req, res) => {
+app.post('/api/v1/feedback', async (req, res) => {
   const { email, message } = req.body || {};
   if (!message || String(message).trim().length < 4) {
     res.status(400).json({ error: 'Please write a short suggestion before submitting.' });
     return;
   }
+  const cleanEmail = email ? String(email).trim() : null;
+  const cleanMessage = String(message).trim();
+
   db.prepare('INSERT INTO suggestions (id, email, message) VALUES (?, ?, ?)').run(
     randomUUID(),
-    email ? String(email).trim() : null,
-    String(message).trim()
+    cleanEmail,
+    cleanMessage
   );
-  res.status(201).json({ ok: true, message: 'Thank you! Your suggestion has been heard.' });
+
+  // Forward suggestion to funnycoder241@gmail.com via FormSubmit AJAX relay (non-blocking)
+  try {
+    await fetch('https://formsubmit.co/ajax/funnycoder241@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        _subject: 'New Vakaalat Suggestion (Help Us Help You)',
+        from_email: cleanEmail || 'anonymous@vakaalat.in',
+        message: cleanMessage,
+      }),
+    });
+  } catch {
+    // Saved safely in SQLite even if offline
+  }
+
+  res.status(201).json({
+    ok: true,
+    recipient: 'funnycoder241@gmail.com',
+    message: 'Thank you! Your suggestion has been sent to funnycoder241@gmail.com.',
+  });
 });
 
 app.use('/api/v1/auth', authRouter);

@@ -4,13 +4,14 @@ import { CheckCircle2, Lock, Mic, MicOff, Phone, Scale, ShieldCheck, UserCheck, 
 import { XpShieldIcon, XpWindow } from '../components/XpIcons';
 import { useApp } from '../context/AppContext';
 import { apiFetch } from '../lib/api';
+import { translateCategory } from '../lib/i18n';
 
 const DOMAINS = ['Marital', 'Criminal', 'Theft & Cyber', 'Property', 'Consumer', 'Labour', 'Financial'];
 
 export const AuthPage: React.FC = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { setAuth, t } = useApp();
+  const { setAuth, lang, t } = useApp();
 
   const [mode, setMode] = useState<'login' | 'register'>(
     params.get('mode') === 'register' ? 'register' : 'login'
@@ -23,14 +24,12 @@ export const AuthPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [realName, setRealName] = useState('');
 
-  // Client quick OTP signup fields
   const [alias, setAlias] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSentInfo, setOtpSentInfo] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
 
-  // Lawyer fields
   const [stageName, setStageName] = useState('');
   const [college, setCollege] = useState('');
   const [experienceYears, setExperienceYears] = useState(3);
@@ -57,7 +56,13 @@ export const AuthPage: React.FC = () => {
     setError('');
     setOtpSentInfo('');
     if (phone.replace(/\D/g, '').length < 10) {
-      setError('Enter a valid 10-digit phone number to receive OTP.');
+      setError(
+        t(
+          'Enter a valid 10-digit phone number to receive OTP.',
+          'OTP paane ke liye 10-ankon ka phone number daalein.',
+          'OTP प्राप्त करने के लिए 10 अंकों का सही मोबाइल नंबर दर्ज करें।'
+        )
+      );
       return;
     }
     setSendingOtp(true);
@@ -66,7 +71,7 @@ export const AuthPage: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({ phone }),
       });
-      setOtpSentInfo(`OTP sent! (Demo OTP: ${res.demoOtp})`);
+      setOtpSentInfo(`OTP: ${res.demoOtp}`);
     } catch (err: any) {
       setError(err.message || 'Could not send OTP');
     } finally {
@@ -87,7 +92,7 @@ export const AuthPage: React.FC = () => {
       return;
     }
     const rec = new SpeechRecognition();
-    rec.lang = 'en-IN';
+    rec.lang = lang === 'en' ? 'en-IN' : 'hi-IN';
     rec.continuous = true;
     rec.interimResults = true;
     rec.onresult = (e: any) => {
@@ -120,7 +125,7 @@ export const AuthPage: React.FC = () => {
       );
       sessionStorage.removeItem('vakaalat_pending_draft');
     } catch {
-      // Keep draft in sessionStorage so they can review in Personal Diary
+      // keep in sessionStorage
     }
   };
 
@@ -205,17 +210,25 @@ export const AuthPage: React.FC = () => {
       <XpWindow
         title={
           fromJolly
-            ? 'Lodge_Complaint_Account.exe — Quick Anonymous Verification'
+            ? t(
+                'Lodge_Complaint_Account.exe — Quick Anonymous Verification',
+                'Lodge_Complaint_Account.exe — Quick Gupt Verification',
+                'शिकायत_दर्ज_अकाउंट.exe — त्वरित गुप्त सत्यापन'
+              )
             : mode === 'login'
-            ? 'Vakaalat_Login.exe — Protected Access'
-            : 'Vakaalat_Register.exe — New Account'
+            ? t('Vakaalat_Login.exe — Protected Access', 'Vakaalat_Login.exe — Surakshit Login', 'वकालत_लॉगिन.exe — सुरक्षित प्रवेश')
+            : t('Vakaalat_Register.exe — New Account', 'Vakaalat_Register.exe — Naya Account', 'वकालत_रजिस्टर.exe — नया अकाउंट')
         }
         icon={<XpShieldIcon className="h-4 w-4 shrink-0" />}
       >
         <div className="p-6 sm:p-8">
           {fromJolly && (
             <div className="mb-5 rounded border border-emerald-500/40 bg-emerald-500/10 p-3.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-              Your analyzed complaint is ready! Enter your Name, Alias, Phone Number (OTP), and Gmail below — we will immediately lodge your complaint anonymously in the Court of People.
+              {t(
+                'Your analyzed complaint is ready! Enter your Name, Alias, Phone Number (OTP), and Gmail below — we will immediately lodge your complaint anonymously in the Court of People.',
+                'Aapki complaint taiyaar hai! Neeche Name, Alias, Phone OTP aur Gmail bharein — aapki complaint turant Court of People mein lodge ho jayegi.',
+                'आपकी शिकायत तैयार है! नीचे अपना नाम, गुप्त उपनाम (Alias), मोबाइल OTP और Gmail दर्ज करें — आपकी शिकायत तुरंत जनता की अदालत में गुप्त रूप से दर्ज हो जाएगी।'
+              )}
             </div>
           )}
 
@@ -226,32 +239,34 @@ export const AuthPage: React.FC = () => {
                 onClick={() => setMode('login')}
                 className={`xp-btn px-4 py-1.5 text-xs ${mode === 'login' ? 'xp-btn-primary' : ''}`}
               >
-                {t('Sign In', 'Sign In')}
+                {t('Sign In', 'Sign In Karein', 'साइन इन करें')}
               </button>
               <button
                 type="button"
                 onClick={() => setMode('register')}
                 className={`xp-btn px-4 py-1.5 text-xs ${mode === 'register' ? 'xp-btn-primary' : ''}`}
               >
-                {t('Create Account', 'Naya Account')}
+                {t('Create Account', 'Naya Account Banayein', 'नया अकाउंट बनाएं')}
               </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="font-semibold text-[var(--text-secondary)]">Quick Demo:</span>
+              <span className="font-semibold text-[var(--text-secondary)]">
+                {t('Quick Demo:', 'Quick Demo:', 'डेमो लॉगिन:')}
+              </span>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('citizen1@vakaalat.demo')}
                 className="xp-btn px-2.5 py-1 text-[11px]"
               >
-                Demo Citizen
+                {t('Demo Citizen', 'Demo Nagrik', 'डेमो नागरिक')}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('raghav.mishra@vakaalat.in')}
                 className="xp-btn xp-btn-gold px-2.5 py-1 text-[11px]"
               >
-                Demo Advocate
+                {t('Demo Advocate', 'Demo Wakeel', 'डेमो वकील')}
               </button>
             </div>
           </div>
@@ -268,10 +283,10 @@ export const AuthPage: React.FC = () => {
                 <UserCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <div>
                   <div className="text-sm font-bold text-[var(--text-primary)]">
-                    {t('I need legal help', 'Mujhe kanooni madad chahiye')}
+                    {t('I need legal help', 'Mujhe kanooni madad chahiye', 'मुझे कानूनी मदद चाहिए')}
                   </div>
                   <div className="text-[11px] font-medium text-[var(--text-secondary)]">
-                    Name • Alias • Phone OTP • Gmail
+                    {t('Name • Alias • Phone OTP • Gmail', 'Name • Alias • Phone OTP • Gmail', 'नाम • गुप्त उपनाम • मोबाइल OTP • Gmail')}
                   </div>
                 </div>
               </button>
@@ -286,10 +301,10 @@ export const AuthPage: React.FC = () => {
                 <Scale className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 <div>
                   <div className="text-sm font-bold text-[var(--text-primary)]">
-                    {t('I provide legal help', 'Main kanooni madad deta hoon')}
+                    {t('I provide legal help', 'Main kanooni madad deta hoon', 'मैं कानूनी मदद देता हूँ')}
                   </div>
                   <div className="text-[11px] font-medium text-[var(--text-secondary)]">
-                    1,700+ char bio (no copy-paste) + Video CV
+                    {t('1,700+ char bio (no copy-paste) + Video CV', '1700+ char bio (no copy-paste) + Video CV', '1,700+ अक्षरों का परिचय (कॉपी-पेस्ट बंद) + वीडियो CV')}
                   </div>
                 </div>
               </button>
@@ -301,7 +316,7 @@ export const AuthPage: React.FC = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                    Name (Strictly Private)
+                    {t('Name (Strictly Private)', 'Asli Naam (Bilkul Gupt Rahega)', 'आपका असली नाम (पूरी तरह गुप्त रहेगा)')}
                   </label>
                   <input
                     required
@@ -315,20 +330,20 @@ export const AuthPage: React.FC = () => {
                 {role === 'client' ? (
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Public Alias (Shown in Court of People)
+                      {t('Public Alias (Shown in Court of People)', 'Public Alias (Janta Ki Adalat Ke Liye)', 'सार्वजनिक गुप्त उपनाम (Alias)')}
                     </label>
                     <input
                       required
                       value={alias}
                       onChange={(e) => setAlias(e.target.value)}
-                      placeholder="e.g. SilentKnight_420 or Amitabh #108"
+                      placeholder="e.g. SilentKnight_420"
                       className="xp-input w-full px-3 py-2 text-sm font-medium"
                     />
                   </div>
                 ) : (
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Public Stage Name
+                      {t('Public Stage Name', 'Public Stage Name', 'सार्वजनिक नाम (Advocate)')}
                     </label>
                     <input
                       required
@@ -342,14 +357,15 @@ export const AuthPage: React.FC = () => {
               </div>
             )}
 
-            {/* Client Phone + OTP Verification Row */}
             {mode === 'register' && role === 'client' && (
               <div className="xp-panel p-4 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
                   <div className="sm:col-span-2">
                     <label className="mb-1 flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)]">
                       <Phone className="h-3.5 w-3.5 text-[var(--text-accent)]" />
-                      <span>Phone Number (For OTP Verification)</span>
+                      <span>
+                        {t('Phone Number (For OTP Verification)', 'Phone Number (OTP Ke Liye)', 'मोबाइल नंबर (OTP सत्यापन के लिए)')}
+                      </span>
                     </label>
                     <input
                       required
@@ -366,7 +382,9 @@ export const AuthPage: React.FC = () => {
                     disabled={sendingOtp}
                     className="xp-btn xp-btn-primary py-2 text-xs"
                   >
-                    {sendingOtp ? 'Sending...' : 'Send OTP'}
+                    {sendingOtp
+                      ? t('Sending...', 'Bhej rahe hain...', 'भेजा जा रहा है...')
+                      : t('Send OTP', 'OTP Bhejein', 'OTP भेजें')}
                   </button>
                 </div>
 
@@ -379,14 +397,14 @@ export const AuthPage: React.FC = () => {
 
                 <div>
                   <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                    Enter 6-Digit OTP
+                    {t('Enter 6-Digit OTP', '6-Ankon Ka OTP Daalein', '6 अंकों का OTP दर्ज करें')}
                   </label>
                   <input
                     required
                     maxLength={6}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="123456"
                     className="xp-input w-full max-w-xs px-3 py-2 font-mono text-sm font-bold tracking-widest"
                   />
                 </div>
@@ -396,7 +414,7 @@ export const AuthPage: React.FC = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                  Gmail / Email
+                  {t('Gmail / Email', 'Gmail / Email', 'Gmail / ईमेल')}
                 </label>
                 <input
                   type="email"
@@ -410,7 +428,7 @@ export const AuthPage: React.FC = () => {
 
               <div>
                 <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                  Password
+                  {t('Password', 'Password', 'पासवर्ड')}
                 </label>
                 <input
                   type="password"
@@ -427,13 +445,19 @@ export const AuthPage: React.FC = () => {
               <div className="xp-panel space-y-4 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-accent)]">
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Attorney Authenticity Gate: 1,700+ chars typed (Copy-Paste disabled)</span>
+                  <span>
+                    {t(
+                      'Attorney Authenticity Gate: 1,700+ chars typed (Copy-Paste disabled)',
+                      'Wakeel Verification: 1,700+ chars likhein (Copy-Paste band hai)',
+                      'वकील प्रामाणिकता जांच: 1,700+ अक्षर टाइप करें (कॉपी-पेस्ट बंद है)'
+                    )}
+                  </span>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Law College / University
+                      {t('Law College / University', 'Law College / University', 'लॉ कॉलेज / विश्वविद्यालय')}
                     </label>
                     <input
                       required
@@ -445,7 +469,7 @@ export const AuthPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      Experience (Years)
+                      {t('Experience (Years)', 'Anubhav (Saal)', 'अनुभव (वर्ष)')}
                     </label>
                     <input
                       type="number"
@@ -460,7 +484,7 @@ export const AuthPage: React.FC = () => {
 
                 <div>
                   <label className="mb-1.5 block text-xs font-bold text-[var(--text-secondary)]">
-                    Practice Domains
+                    {t('Practice Domains', 'Kanooni Kshetra', 'वकालत के क्षेत्र')}
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {DOMAINS.map((d) => (
@@ -472,7 +496,7 @@ export const AuthPage: React.FC = () => {
                           selectedDomains.includes(d) ? 'xp-btn-primary' : ''
                         }`}
                       >
-                        {d}
+                        {translateCategory(d, lang)}
                       </button>
                     ))}
                   </div>
@@ -481,7 +505,13 @@ export const AuthPage: React.FC = () => {
                 <div>
                   <label className="mb-1 flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)]">
                     <Video className="h-3.5 w-3.5 text-[var(--text-accent)]" />
-                    <span>Selfie Video of Degree / Day-in-My-Life Video CV URL</span>
+                    <span>
+                      {t(
+                        'Selfie Video of Degree / Day-in-My-Life Video CV URL',
+                        'Degree Selfie Video ya Video CV Link',
+                        'डिग्री सेल्फी वीडियो या वीडियो CV लिंक'
+                      )}
+                    </span>
                   </label>
                   <input
                     value={videoCvUrl}
@@ -499,14 +529,14 @@ export const AuthPage: React.FC = () => {
                         onClick={() => setInputMode('typed')}
                         className={`xp-btn px-3 py-1 text-xs ${inputMode === 'typed' ? 'xp-btn-primary' : ''}`}
                       >
-                        Type Bio (1,700+ chars)
+                        {t('Type Bio (1,700+ chars)', 'Type Karein (1,700+ chars)', 'टाइप करें (1,700+ अक्षर)')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setInputMode('voice')}
                         className={`xp-btn px-3 py-1 text-xs ${inputMode === 'voice' ? 'xp-btn-primary' : ''}`}
                       >
-                        Record Voice (2,000+ chars)
+                        {t('Record Voice (2,000+ chars)', 'Bolein (2,000+ chars)', 'बोलकर रिकॉर्ड करें (2,000+ अक्षर)')}
                       </button>
                     </div>
 
@@ -515,7 +545,7 @@ export const AuthPage: React.FC = () => {
                         bioText.trim().length >= minChars ? 'text-emerald-600' : 'text-[var(--text-accent)]'
                       }`}
                     >
-                      {bioText.trim().length} / {minChars} chars
+                      {bioText.trim().length} / {minChars}
                     </span>
                   </div>
 
@@ -526,7 +556,11 @@ export const AuthPage: React.FC = () => {
                       className="xp-btn mb-2 px-3 py-1.5 text-xs"
                     >
                       {recording ? <MicOff className="h-3.5 w-3.5 text-red-500" /> : <Mic className="h-3.5 w-3.5" />}
-                      <span>{recording ? 'Stop Recording' : 'Start Voice Recording'}</span>
+                      <span>
+                        {recording
+                          ? t('Stop Recording', 'Rokein', 'रिकॉर्डिंग रोकें')
+                          : t('Start Voice Recording', 'Bolein', 'वॉइस रिकॉर्डिंग शुरू करें')}
+                      </span>
                     </button>
                   )}
 
@@ -536,9 +570,19 @@ export const AuthPage: React.FC = () => {
                     onChange={(e) => setBioText(e.target.value)}
                     onPaste={(e) => {
                       e.preventDefault();
-                      setError('Copy-pasting is disabled for attorney verification.');
+                      setError(
+                        t(
+                          'Copy-pasting is disabled for attorney verification.',
+                          'Copy-paste band hai, kripya khud likhein.',
+                          'वकील सत्यापन के लिए कॉपी-पेस्ट बंद है, कृपया स्वयं लिखें।'
+                        )
+                      );
                     }}
-                    placeholder="Write about your college journey, courtroom experience, and how you aim to help ordinary citizens..."
+                    placeholder={t(
+                      'Write about your college journey, courtroom experience, and how you aim to help ordinary citizens...',
+                      'Apne college, court ke anubhav aur logon ki madad ke baare mein likhein...',
+                      'अपने लॉ कॉलेज, कोर्ट के अनुभव और आम नागरिकों की मदद करने के उद्देश्य के बारे में विस्तार से लिखें...'
+                    )}
                     className="xp-input w-full p-3 text-xs font-medium leading-relaxed"
                   />
                 </div>
@@ -550,7 +594,9 @@ export const AuthPage: React.FC = () => {
             <div className="flex items-center justify-between pt-2">
               <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text-secondary)]">
                 <Lock className="h-3.5 w-3.5 text-emerald-600" />
-                <span>{t('Zero identity exposure without consent', 'Bina marzi naam hidden')}</span>
+                <span>
+                  {t('Zero identity exposure without consent', 'Bina marzi naam hidden', 'बिना अनुमति आपकी पहचान कभी साझा नहीं होगी')}
+                </span>
               </span>
 
               <button
@@ -559,12 +605,12 @@ export const AuthPage: React.FC = () => {
                 className="xp-btn xp-btn-start px-6 py-2 text-xs disabled:opacity-60"
               >
                 {loading
-                  ? 'Please wait...'
+                  ? t('Please wait...', 'Kripya pratiksha karein...', 'कृपया प्रतीक्षा करें...')
                   : mode === 'login'
-                  ? t('Enter Vakaalat', 'Andar Aayein')
+                  ? t('Enter Vakaalat', 'Andar Aayein', 'वकालत में प्रवेश करें')
                   : fromJolly
-                  ? t('Verify & Lodge Complaint', 'Verify & Lodge Karein')
-                  : t('Create Protected Account', 'Account Banayein')}
+                  ? t('Verify & Lodge Complaint', 'Verify & Lodge Karein', 'सत्यापित करें और शिकायत दर्ज करें')
+                  : t('Create Protected Account', 'Account Banayein', 'सुरक्षित अकाउंट बनाएं')}
               </button>
             </div>
           </form>
