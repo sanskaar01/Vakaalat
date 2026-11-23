@@ -87,7 +87,6 @@ export const JollyTypewriter: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [translatingResult, setTranslatingResult] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [geminiReady, setGeminiReady] = useState<boolean | null>(null);
   const [result, setResult] = useState<ComputedLegalAnalysis | null>(null);
   const [resultLang, setResultLang] = useState<LangMode>('en');
   const resultsByLangRef = useRef<Partial<Record<LangMode, ComputedLegalAnalysis>>>({});
@@ -122,12 +121,6 @@ export const JollyTypewriter: React.FC = () => {
       .then((res) => setHistory(res.history))
       .catch(() => {});
   };
-
-  useEffect(() => {
-    apiFetch<{ geminiConfigured: boolean }>('/jolly/status')
-      .then((s) => setGeminiReady(s.geminiConfigured))
-      .catch(() => setGeminiReady(false));
-  }, []);
 
   useEffect(() => {
     loadHistory();
@@ -277,7 +270,6 @@ export const JollyTypewriter: React.FC = () => {
       if (!res.ok) {
         if (data.errorCode === 'GEMINI_KEY_REQUIRED') {
           setNeedsKey(true);
-          setGeminiReady(false);
         }
         throw new Error(data.error || 'Legal analysis failed');
       }
@@ -286,7 +278,6 @@ export const JollyTypewriter: React.FC = () => {
       resultsByLangRef.current[lang] = analysis;
       setResultLang(lang);
       setResult(analysis);
-      setGeminiReady(true);
       loadHistory();
 
       // Immediately start pre-generating the AI Court of People draft in the background!
@@ -1079,21 +1070,6 @@ export const JollyTypewriter: React.FC = () => {
           </div>
         </div>
       )}
-
-      <div className="xp-statusbar">
-        <span>
-          {geminiReady === true
-            ? t(
-                'Engine: Connected to Gemini (Live 4-Pillar Computation)',
-                'Engine: Gemini Se Connected (Live 4-Pillar Analysis)',
-                'इंजन: Gemini से जुड़ा हुआ (लाइव 4-स्तंभ विश्लेषण)'
-              )
-            : t('Engine: Ready', 'Engine: Taiyaar', 'इंजन: तैयार')}
-        </span>
-        <span className="hidden sm:inline font-mono">
-          {t('Self-Learning Experience Store Active', 'Self-Learning Store Active', 'सेल्फ-लर्निंग सिस्टम सक्रिय')}
-        </span>
-      </div>
     </XpWindow>
   );
 };

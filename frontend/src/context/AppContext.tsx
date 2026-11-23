@@ -34,14 +34,8 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function computeTimeBasedTheme(): ThemeMode {
-  const hour = new Date().getHours();
-  return hour >= 6 && hour < 18 ? 'light' : 'dark';
-}
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [manualTheme, setManualTheme] = useState<ThemeMode | null>(null);
-  const [autoTheme, setAutoTheme] = useState<ThemeMode>(computeTimeBasedTheme);
+  const [theme, setTheme] = useState<ThemeMode>('light');
   const [lang, setLang] = useState<LangMode>('en');
   const [isComputing, setIsComputing] = useState<boolean>(false);
   const [burstActive, setBurstActive] = useState<boolean>(false);
@@ -63,18 +57,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return raw ? JSON.parse(raw) : null;
   });
 
-  const theme = manualTheme ?? autoTheme;
-
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAutoTheme(computeTimeBasedTheme());
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, []);
 
   const refreshUser = async () => {
     if (!token) return;
@@ -108,7 +93,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleTheme = () => {
-    setManualTheme((prev) => ((prev ?? autoTheme) === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const toggleLang = () =>

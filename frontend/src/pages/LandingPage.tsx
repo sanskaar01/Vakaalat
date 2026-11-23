@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Mail, MessageSquare, Scale, Send, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, MessageSquare, Scale, Send, ShieldCheck, Users } from 'lucide-react';
 import { JollyTypewriter } from '../components/JollyTypewriter';
 import { VakaalatLogo } from '../components/VakaalatLogo';
 import {
@@ -243,13 +243,13 @@ export const LandingPage: React.FC = () => {
         </XpWindow>
       </motion.section>
 
-      {/* SECTION 5: FOOTER — WRITE TO US! HELP US HELP YOU (Connected to funnycoder241@gmail.com) */}
+      {/* SECTION 5: FOOTER — WRITE TO US! HELP US HELP YOU */}
       <footer>
         <XpWindow
           title={t(
-            'Help_Us_Help_You.msg — Connected to funnycoder241@gmail.com',
-            'Help_Us_Help_You.msg — funnycoder241@gmail.com Se Juda Hua',
-            'हमारी_मदद_करें.msg — funnycoder241@gmail.com से जुड़ा हुआ'
+            'Help_Us_Help_You.msg — Write to Us',
+            'Help_Us_Help_You.msg — Humein Likhein',
+            'हमारी_मदद_करें.msg — हमें लिखें'
           )}
           icon={<XpMailIcon className="h-4 w-4 shrink-0" />}
         >
@@ -267,18 +267,11 @@ export const LandingPage: React.FC = () => {
               </h3>
               <p className="mt-2 text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
                 {t(
-                  'Missing a government portal, a legal category, or a feature that would make Vakaalat safer for you? Every message is delivered straight to funnycoder241@gmail.com.',
-                  'Koi sarkari portal, category ya feature chahiye? Aapka har sujhav seedha funnycoder241@gmail.com par bheja jaata hai.',
-                  'क्या कोई सरकारी पोर्टल, कानूनी श्रेणी या सुविधा जोड़नी चाहिए जिससे वकालत आपके लिए और बेहतर बन सके? आपका हर सुझाव सीधे funnycoder241@gmail.com पर भेजा जाता है।'
+                  'Missing a government portal, a legal category, or a feature that would make Vakaalat safer for you? Drop a note—every suggestion goes straight to our team.',
+                  'Koi sarkari portal, category ya feature chahiye? Neeche likhein—har sujhav seedha hamari team tak pahunchta hai.',
+                  'क्या कोई सरकारी पोर्टल, कानूनी श्रेणी या सुविधा जोड़नी चाहिए जिससे वकालत आपके लिए और बेहतर बन सके? नीचे लिखें—आपका हर सुझाव सीधे हमारी टीम तक पहुँचता है।'
                 )}
               </p>
-              <a
-                href="mailto:funnycoder241@gmail.com?subject=Vakaalat%20Suggestion"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--text-accent)] hover:underline"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                <span>funnycoder241@gmail.com</span>
-              </a>
             </div>
 
             <form onSubmit={handleFeedbackSubmit} className="space-y-2.5">
@@ -287,9 +280,9 @@ export const LandingPage: React.FC = () => {
                   <ShieldCheck className="h-4 w-4 shrink-0" />
                   <span>
                     {t(
-                      'Thank you! Your suggestion has been sent to funnycoder241@gmail.com.',
-                      'Shukriya! Aapka sujhav funnycoder241@gmail.com par bhej diya gaya hai.',
-                      'धन्यवाद! आपका सुझाव funnycoder241@gmail.com पर भेज दिया गया है।'
+                      'Thank you! Your suggestion has been sent.',
+                      'Shukriya! Aapka sujhav bhej diya gaya hai.',
+                      'धन्यवाद! आपका सुझाव भेज दिया गया है।'
                     )}
                   </span>
                 </div>
@@ -323,9 +316,9 @@ export const LandingPage: React.FC = () => {
                       <Send className="h-3.5 w-3.5" />
                       <span>
                         {t(
-                          'Send to funnycoder241@gmail.com',
-                          'funnycoder241@gmail.com Par Bhejein',
-                          'funnycoder241@gmail.com पर सुझाव भेजें'
+                          'Send Suggestion',
+                          'Sujhav Bhejein',
+                          'सुझाव भेजें'
                         )}
                       </span>
                     </button>

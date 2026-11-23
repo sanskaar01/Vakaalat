@@ -63,7 +63,7 @@ export const HINDI_DICTIONARY: Record<string, string> = {
   'Your email (optional — stay anonymous if you want)': 'आपका ईमेल (वैकल्पिक — चाहें तो गुप्त रहें)',
   'Tell us how we can make Vakaalat better for you...': 'बताएं कि हम वकालत को आपके लिए और बेहतर कैसे बना सकते हैं...',
   'Send Suggestion': 'सुझाव भेजें',
-  'Thank you! Your suggestion has been saved.': 'धन्यवाद! आपका सुझावfunnycoder241@gmail.com पर भेज दिया गया है।',
+  'Thank you! Your suggestion has been saved.': 'धन्यवाद! आपका सुझाव भेज दिया गया है।',
 
   // Legal Engine (JollyTypewriter)
   'Private First-Aid Legal Engine — Every story is examined live with care & respect.':

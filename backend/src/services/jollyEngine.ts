@@ -83,16 +83,14 @@ export type ComputedLegalAnalysis = z.infer<typeof VakaalatComputationSchema> & 
   poweredBy: string;
 };
 
-export const ACTIVE_GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash-lite';
+export const ACTIVE_GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-flash-lite-latest';
 const GEMINI_MODEL_CHAIN = [
   ACTIVE_GEMINI_MODEL,
   'gemini-3.5-flash',
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-flash-lite-latest',
   'gemini-flash-latest',
+  'gemini-3.8-flash',
 ];
 
 async function generateWithFailover(
