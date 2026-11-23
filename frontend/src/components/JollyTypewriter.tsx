@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowRight,
-  Edit3,
   ExternalLink,
   Gavel,
   History,
@@ -12,6 +11,7 @@ import {
   Mic,
   MicOff,
   PlayCircle,
+  RefreshCw,
   Scale,
   Send,
   ShieldAlert,
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { apiFetch } from '../lib/api';
-import { translateCategory } from '../lib/i18n';
+import { LangMode, translateCategory } from '../lib/i18n';
 import { MoonPhaseLoader, SolutionSideArrow } from './BlissScenicBackdrop';
 import { XpNotepadIcon, XpShieldIcon, XpWindow } from './XpIcons';
 
@@ -85,23 +85,31 @@ export const JollyTypewriter: React.FC = () => {
 
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [translatingResult, setTranslatingResult] = useState(false);
   const [recording, setRecording] = useState(false);
   const [geminiReady, setGeminiReady] = useState<boolean | null>(null);
   const [result, setResult] = useState<ComputedLegalAnalysis | null>(null);
+  const [resultLang, setResultLang] = useState<LangMode>('en');
+  const resultsByLangRef = useRef<Partial<Record<LangMode, ComputedLegalAnalysis>>>({});
+
   const [history, setHistory] = useState<SavedHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [hoveredPortal, setHoveredPortal] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [needsKey, setNeedsKey] = useState(false);
 
-  const [draftingPost, setDraftingPost] = useState(false);
+  // Instant Post Editor Modal + Background AI Pre-Draft
   const [draftModalOpen, setDraftModalOpen] = useState(false);
-  const [draftEditing, setDraftEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftBody, setDraftBody] = useState('');
   const [draftCategory, setDraftCategory] = useState('Criminal');
+  const [writingWithAi, setWritingWithAi] = useState(false);
   const [publishingPost, setPublishingPost] = useState(false);
   const [draftError, setDraftError] = useState('');
+
+  // Background pre-generated AI drafts keyed by language
+  const bgDraftCacheRef = useRef<Partial<Record<LangMode, { title: string; body: string; category: string }>>>({});
+  const bgDraftPromiseRef = useRef<Promise<{ title: string; body: string; category: string } | null> | null>(null);
 
   const recognitionRef = useRef<any>(null);
 
@@ -124,6 +132,73 @@ export const JollyTypewriter: React.FC = () => {
   useEffect(() => {
     loadHistory();
   }, [token]);
+
+  // Background AI post pre-generator (runs silently right after 4-pillar analysis completes!)
+  const startBackgroundDraftGeneration = (analysis: ComputedLegalAnalysis, targetLang: LangMode) => {
+    if (bgDraftCacheRef.current[targetLang]) return;
+
+    const promise = apiFetch<{ title: string; body: string; category: string }>(
+      '/jolly/draft-post',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          userStory: analysis.draftPostRaw,
+          category: analysis.detectedCategory,
+          dharas: analysis.pillar1_violations.violations.map((v) => v.code),
+          language: targetLang,
+        }),
+      },
+      token
+    )
+      .then((drafted) => {
+        bgDraftCacheRef.current[targetLang] = drafted;
+        return drafted;
+      })
+      .catch(() => null);
+
+    bgDraftPromiseRef.current = promise;
+  };
+
+  // Live language switcher for already-computed 4-pillar response!
+  useEffect(() => {
+    if (!result || resultLang === lang) return;
+
+    // 1. Check in-memory language cache first (instant 0ms switch!)
+    const cachedForLang = resultsByLangRef.current[lang];
+    if (cachedForLang) {
+      setResult(cachedForLang);
+      setResultLang(lang);
+      startBackgroundDraftGeneration(cachedForLang, lang);
+      return;
+    }
+
+    // 2. Otherwise translate the active 4-pillar result live into the clicked language
+    let cancelled = false;
+    setTranslatingResult(true);
+    apiFetch<ComputedLegalAnalysis>(
+      '/jolly/translate-result',
+      {
+        method: 'POST',
+        body: JSON.stringify({ analysis: result, language: lang }),
+      },
+      token
+    )
+      .then((translated) => {
+        if (cancelled) return;
+        resultsByLangRef.current[lang] = translated;
+        setResult(translated);
+        setResultLang(lang);
+        startBackgroundDraftGeneration(translated, lang);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setTranslatingResult(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lang, result, resultLang]);
 
   const handleVoiceToggle = () => {
     const SpeechRecognition =
@@ -184,6 +259,9 @@ export const JollyTypewriter: React.FC = () => {
     setIsComputing(true);
     triggerScenicBurst(10_000);
     setResult(null);
+    resultsByLangRef.current = {};
+    bgDraftCacheRef.current = {};
+    bgDraftPromiseRef.current = null;
 
     try {
       const res = await fetch('/api/v1/jolly/chat', {
@@ -204,9 +282,15 @@ export const JollyTypewriter: React.FC = () => {
         throw new Error(data.error || 'Legal analysis failed');
       }
 
-      setResult(data as ComputedLegalAnalysis);
+      const analysis = data as ComputedLegalAnalysis;
+      resultsByLangRef.current[lang] = analysis;
+      setResultLang(lang);
+      setResult(analysis);
       setGeminiReady(true);
       loadHistory();
+
+      // Immediately start pre-generating the AI Court of People draft in the background!
+      startBackgroundDraftGeneration(analysis, lang);
     } catch (err: any) {
       setError(err.message || 'Could not compute legal analysis.');
     } finally {
@@ -215,12 +299,45 @@ export const JollyTypewriter: React.FC = () => {
     }
   };
 
-  const handleLodgeInCourt = async () => {
+  // Opens the editor modal in 0ms (empty fields first so user can write themselves or click "Write with AI")
+  const handleOpenLodgeEditor = () => {
     if (!result) return;
     setDraftError('');
-    setDraftingPost(true);
+    setDraftCategory(result.detectedCategory || 'Criminal');
+    setDraftTitle('');
+    setDraftBody('');
+    setDraftModalOpen(true);
+
+    // Ensure background AI draft is running if not already cached
+    startBackgroundDraftGeneration(result, lang);
+  };
+
+  // Fills the editor when user clicks "Write with AI" (uses pre-generated background draft!)
+  const handleFillWithAi = async () => {
+    if (!result) return;
+    setDraftError('');
+
+    const cached = bgDraftCacheRef.current[lang];
+    if (cached) {
+      setDraftTitle(cached.title);
+      setDraftBody(cached.body);
+      setDraftCategory(cached.category || result.detectedCategory);
+      return;
+    }
+
+    setWritingWithAi(true);
     try {
-      const drafted = await apiFetch<{ title: string; body: string; category: string }>(
+      if (bgDraftPromiseRef.current) {
+        const awaited = await bgDraftPromiseRef.current;
+        if (awaited) {
+          setDraftTitle(awaited.title);
+          setDraftBody(awaited.body);
+          setDraftCategory(awaited.category || result.detectedCategory);
+          return;
+        }
+      }
+
+      const fresh = await apiFetch<{ title: string; body: string; category: string }>(
         '/jolly/draft-post',
         {
           method: 'POST',
@@ -233,20 +350,16 @@ export const JollyTypewriter: React.FC = () => {
         },
         token
       );
-      setDraftTitle(drafted.title);
-      setDraftBody(drafted.body);
-      setDraftCategory(drafted.category || result.detectedCategory);
-      setDraftEditing(false);
-      setDraftModalOpen(true);
+      bgDraftCacheRef.current[lang] = fresh;
+      setDraftTitle(fresh.title);
+      setDraftBody(fresh.body);
+      setDraftCategory(fresh.category || result.detectedCategory);
     } catch (err: any) {
       setDraftTitle(result.suggestedPostTitle);
       setDraftBody(result.draftPostRaw);
-      setDraftCategory(result.detectedCategory);
-      setDraftEditing(true);
-      setDraftError(err.message || 'Could not auto-draft; you can edit below and post directly.');
-      setDraftModalOpen(true);
+      setDraftError(err.message || 'Filled with your story summary.');
     } finally {
-      setDraftingPost(false);
+      setWritingWithAi(false);
     }
   };
 
@@ -254,9 +367,9 @@ export const JollyTypewriter: React.FC = () => {
     if (!draftTitle.trim() || draftBody.trim().length < 15) {
       setDraftError(
         t(
-          'Please make sure your post has a headline and at least a short description.',
-          'Kripya headline aur thoda vivaran zaroor likhein.',
-          'कृपया सुनिश्चित करें कि आपकी पोस्ट में शीर्षक और विवरण मौजूद है।'
+          'Please write a headline and description (or click "Write with AI" above).',
+          'Kripya headline aur vivaran likhein (ya upar "Write with AI" dabayein).',
+          'कृपया शीर्षक और विवरण लिखें (या ऊपर "AI से लिखवाएं" बटन दबाएं)।'
         )
       );
       return;
@@ -317,8 +430,8 @@ export const JollyTypewriter: React.FC = () => {
       icon={<XpNotepadIcon className="h-4 w-4 shrink-0" />}
       className="mx-auto w-full max-w-4xl"
     >
-      <div className="p-4 sm:p-6 space-y-4">
-        <div className="xp-panel flex flex-wrap items-center justify-between gap-2 px-3.5 py-2">
+      <div className="p-3.5 sm:p-6 space-y-4">
+        <div className="xp-panel flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
             <XpShieldIcon className="h-4 w-4 shrink-0" />
             <span>
@@ -369,8 +482,11 @@ export const JollyTypewriter: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setQuery(item.query);
+                      resultsByLangRef.current = { [lang]: { ...item.analysis, fromCache: true } };
+                      setResultLang(lang);
                       setResult({ ...item.analysis, fromCache: true });
                       setShowHistory(false);
+                      startBackgroundDraftGeneration(item.analysis, lang);
                     }}
                     className="xp-btn flex-col items-start p-2.5 text-left"
                   >
@@ -500,6 +616,19 @@ export const JollyTypewriter: React.FC = () => {
           </div>
         )}
 
+        {translatingResult && (
+          <div className="xp-panel flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold text-[var(--text-accent)]">
+            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            <span>
+              {t(
+                'Converting analysis to English...',
+                'Analysis ko Hinglish mein badla ja raha hai...',
+                'विश्लेषण को हिंदी में बदला जा रहा है...'
+              )}
+            </span>
+          </div>
+        )}
+
         {result && (
           <div className="border-t border-[var(--border-subtle)] pt-3">
             <SolutionSideArrow
@@ -508,7 +637,7 @@ export const JollyTypewriter: React.FC = () => {
             />
 
             {/* PILLAR 1 */}
-            <div className="xp-panel p-4 space-y-3">
+            <div className="xp-panel p-3.5 sm:p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="xp-btn xp-btn-primary px-2.5 py-0.5 text-xs pointer-events-none">
@@ -553,7 +682,7 @@ export const JollyTypewriter: React.FC = () => {
             />
 
             {/* PILLAR 2 */}
-            <div className="xp-panel p-4 space-y-3">
+            <div className="xp-panel p-3.5 sm:p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="xp-btn xp-btn-gold px-2.5 py-0.5 text-xs pointer-events-none">
                   {t('Pillar 2', 'Pillar 2', 'स्तंभ 2')}
@@ -604,7 +733,7 @@ export const JollyTypewriter: React.FC = () => {
 
             {/* PILLAR 3 + PILLAR 4 */}
             <div className="space-y-3">
-              <div className={`rounded border-2 p-4 space-y-2.5 ${seriousnessColors[result.pillar3_seriousness.level]}`}>
+              <div className={`rounded border-2 p-3.5 sm:p-4 space-y-2.5 ${seriousnessColors[result.pillar3_seriousness.level]}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     {result.pillar3_seriousness.beyondFirstAid ? (
@@ -632,7 +761,7 @@ export const JollyTypewriter: React.FC = () => {
                 </p>
               </div>
 
-              <div className="xp-panel p-4 space-y-4">
+              <div className="xp-panel p-3.5 sm:p-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="xp-btn xp-btn-start px-2.5 py-0.5 text-xs pointer-events-none">
                     {t('Pillar 4', 'Pillar 4', 'स्तंभ 4')}
@@ -658,9 +787,9 @@ export const JollyTypewriter: React.FC = () => {
                 <div>
                   <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     {t(
-                      'Official Portals (Hover on "i" for step-by-step guide)',
-                      'Sarkari Portals ("i" par hover karein)',
-                      'आधिकारिक सरकारी पोर्टल (स्टेप्स देखने के लिए "i" पर माउस ले जाएं)'
+                      'Official Portals (Hover or tap "i" for step-by-step guide)',
+                      'Sarkari Portals ("i" par click ya hover karein)',
+                      'आधिकारिक सरकारी पोर्टल (स्टेप्स देखने के लिए "i" पर टैप या माउस ले जाएं)'
                     )}
                   </h4>
                   <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -784,7 +913,7 @@ export const JollyTypewriter: React.FC = () => {
               side="right"
             />
 
-            <div className="rounded-md border-2 border-[#2b6be0] bg-[var(--bg-elevated)] p-5 text-center shadow-md space-y-3">
+            <div className="rounded-md border-2 border-[#2b6be0] bg-[var(--bg-elevated)] p-4 sm:p-5 text-center shadow-md space-y-3">
               <h4 className="text-lg font-extrabold tracking-tight text-[var(--text-primary)] sm:text-xl">
                 {t(
                   'LODGE THIS COMPLAINT IN THE COURT OF PEOPLE',
@@ -794,23 +923,23 @@ export const JollyTypewriter: React.FC = () => {
               </h4>
               <p className="mx-auto max-w-xl text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
                 {t(
-                  'Create your quick anonymous account (Name, Alias, Phone OTP & Gmail) in 30 seconds. Your real identity stays hidden while verified advocates comment on how they can help.',
-                  'Sirf 30 second mein apna anonymous account banayein (Name, Alias, Phone OTP aur Gmail) aur apni complaint Court of People mein lodge karein.',
-                  'सिर्फ 30 सेकंड में अपना गुप्त अकाउंट बनाएं (नाम, उपनाम, फोन OTP और Gmail)। आपकी असली पहचान छुपी रहेगी और सत्यापित वकील आपकी मदद के लिए टिप्पणी कर सकेंगे।'
+                  'Write your post yourself or click "Write with AI" inside the editor. Your real identity stays hidden while verified advocates comment on how they can help.',
+                  'Editor mein apni post khud likhein ya "Write with AI" dabayein. Aapki asli pehchan gupt rahegi.',
+                  'एडिटर में अपनी पोस्ट स्वयं लिखें या "AI से लिखवाएं" दबाएं। आपकी असली पहचान पूरी तरह गुप्त रहेगी।'
                 )}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={handleLodgeInCourt}
-                  disabled={draftingPost}
-                  className="xp-btn xp-btn-start px-6 py-2.5 text-xs uppercase tracking-wider disabled:opacity-60"
+                  onClick={handleOpenLodgeEditor}
+                  className="xp-btn xp-btn-start px-6 py-2.5 text-xs uppercase tracking-wider"
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
                   <span>
-                    {draftingPost
-                      ? t('Drafting Your Complaint Post with AI...', 'AI Aapki Post Likh Raha Hai...', 'AI आपकी शिकायत की पोस्ट तैयार कर रहा है...')
-                      : t('Lodge This Complaint in the Court of People', 'Court of People Mein Lodge Karein', 'इस शिकायत को जनता की अदालत में दर्ज करें')}
+                    {t(
+                      'Lodge This Complaint in the Court of People',
+                      'Court of People Mein Lodge Karein',
+                      'इस शिकायत को जनता की अदालत में दर्ज करें'
+                    )}
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -824,17 +953,18 @@ export const JollyTypewriter: React.FC = () => {
         )}
       </div>
 
+      {/* INSTANT POST WRITING EDITOR MODAL + "WRITE WITH AI" BUTTON */}
       {draftModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="xp-window w-full max-w-2xl shadow-2xl">
-            <div className="xp-titlebar">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="xp-window w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl">
+            <div className="xp-titlebar shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <XpNotepadIcon className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-bold">
+                <span className="truncate text-xs font-bold">
                   {t(
-                    'AI_Drafted_Complaint.doc — Preview & Publish to Court of People',
-                    'AI_Drafted_Complaint.doc — Preview & Publish',
-                    'AI_शिकायत_ड्राफ्ट.doc — समीक्षा करें और प्रकाशित करें'
+                    'Lodge_Complaint.doc — Write Your Post or Use AI',
+                    'Lodge_Complaint.doc — Khud Likhein Ya AI Se Likhwayein',
+                    'शिकायत_पोस्ट.doc — स्वयं लिखें या AI की मदद लें'
                   )}
                 </span>
               </div>
@@ -848,73 +978,75 @@ export const JollyTypewriter: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-5 sm:p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <span className="rounded bg-[#2b6be0]/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-[var(--text-accent)]">
-                    {translateCategory(draftCategory, lang)} • {t('Anonymous Post', 'Anonymous Post', 'गुप्त पोस्ट')}
+                    {translateCategory(draftCategory, lang)} •{' '}
+                    {t('Anonymous Post', 'Anonymous Post', 'गुप्त पोस्ट')}
                   </span>
                   <h3 className="mt-1 text-base font-bold text-[var(--text-primary)]">
                     {t(
-                      'Your AI-Drafted Court of People Post',
-                      'Aapki AI-Drafted Court of People Post',
-                      'जनता की अदालत के लिए AI द्वारा तैयार आपकी पोस्ट'
+                      'Write Your Court of People Post',
+                      'Apni Court of People Post Likhein',
+                      'जनता की अदालत के लिए अपनी पोस्ट लिखें'
                     )}
                   </h3>
                 </div>
 
+                {/* "Write with AI" Button (fills from pre-generated background AI draft!) */}
                 <button
                   type="button"
-                  onClick={() => setDraftEditing((v) => !v)}
-                  className={`xp-btn px-3 py-1.5 text-xs ${draftEditing ? 'xp-btn-gold' : ''}`}
+                  onClick={handleFillWithAi}
+                  disabled={writingWithAi}
+                  className="xp-btn xp-btn-gold px-3.5 py-1.5 text-xs disabled:opacity-60"
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5" />
                   <span>
-                    {draftEditing
-                      ? t('Done Editing', 'Editing Poori Hui', 'संपादन पूर्ण')
-                      : t('Edit Before Posting', 'Post Se Pehle Edit Karein', 'पोस्ट करने से पहले संपादित करें')}
+                    {writingWithAi
+                      ? t('Writing with AI...', 'AI Likh Raha Hai...', 'AI लिख रहा है...')
+                      : t('Write with AI', 'AI Se Likhein', 'AI से लिखवाएं')}
                   </span>
                 </button>
               </div>
 
-              {draftEditing ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      {t('Post Headline', 'Post Headline', 'पोस्ट का शीर्षक')}
-                    </label>
-                    <input
-                      value={draftTitle}
-                      onChange={(e) => setDraftTitle(e.target.value)}
-                      className="xp-input w-full px-3 py-2 text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
-                      {t('Post Body (Your Sentiments & Facts)', 'Post Vivaran', 'पोस्ट का विवरण (आपकी भावनाएं और तथ्य)')}
-                    </label>
-                    <textarea
-                      rows={6}
-                      value={draftBody}
-                      onChange={(e) => setDraftBody(e.target.value)}
-                      className="xp-input w-full p-3 text-sm font-medium leading-relaxed"
-                    />
-                  </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
+                    {t('Post Headline', 'Post Headline', 'पोस्ट का शीर्षक')}
+                  </label>
+                  <input
+                    value={draftTitle}
+                    onChange={(e) => setDraftTitle(e.target.value)}
+                    placeholder={t(
+                      'Write a short headline in your own words (or click "Write with AI" above)...',
+                      'Apne shabdon mein headline likhein (ya upar "AI Se Likhein" dabayein)...',
+                      'अपने शब्दों में शीर्षक लिखें (या ऊपर "AI से लिखवाएं" बटन दबाएं)...'
+                    )}
+                    className="xp-input w-full px-3 py-2 text-sm font-bold"
+                  />
                 </div>
-              ) : (
-                <div className="xp-panel p-4 space-y-2.5">
-                  <div className="text-[11px] font-bold text-[var(--text-secondary)]">
-                    {t('Posting anonymously as:', 'Gupt naam:', 'गुप्त नाम से पोस्ट किया जाएगा:')}{' '}
-                    <span className="text-blue-700 dark:text-blue-300">
-                      {user?.stageName || t('Your New Anonymous Alias', 'Aapka Naya Gupt Alias', 'आपका नया गुप्त उपनाम')}
-                    </span>
-                  </div>
-                  <h4 className="text-lg font-bold text-[var(--text-primary)]">{draftTitle}</h4>
-                  <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-[var(--text-primary)]">
-                    {draftBody}
-                  </p>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-secondary)]">
+                    {t(
+                      'Your Complaint / Story (Real names & amounts are masked automatically)',
+                      'Aapki Complaint (Asli naam aur paise apne aap blur ho jayenge)',
+                      'आपकी शिकायत का विवरण (असली नाम और पैसे अपने आप छुपा दिए जाएंगे)'
+                    )}
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={draftBody}
+                    onChange={(e) => setDraftBody(e.target.value)}
+                    placeholder={t(
+                      'Write your complaint yourself here, or tap "Write with AI" to auto-fill it with your sentiments and violated Dhaarein...',
+                      'Yahan khud likhein, ya "AI Se Likhein" dabakar AI se taiyaar karwayein...',
+                      'यहाँ अपनी शिकायत स्वयं लिखें, या "AI से लिखवाएं" पर क्लिक करके अपनी भावनाओं और कानूनी धाराओं के साथ ऑटो-फ़िल करें...'
+                    )}
+                    className="xp-input w-full p-3 text-sm font-medium leading-relaxed"
+                  />
                 </div>
-              )}
+              </div>
 
               {draftError && <p className="text-xs font-bold text-red-500">{draftError}</p>}
 
@@ -938,9 +1070,7 @@ export const JollyTypewriter: React.FC = () => {
                     {publishingPost
                       ? t('Publishing Live...', 'Post Ho Raha Hai...', 'लाइव पोस्ट हो रहा है...')
                       : user
-                      ? draftEditing
-                        ? t('Publish Edited Post Live', 'Edited Post Live Karein', 'संपादित पोस्ट लाइव करें')
-                        : t('Post Without Editing — Make Live!', 'Bina Edit Kiye Live Post Karein!', 'बिना बदलाव किए सीधे लाइव पोस्ट करें!')
+                      ? t('Publish Post Live!', 'Live Post Karein!', 'अभी लाइव पोस्ट करें!')
                       : t('Create Account & Post Live!', 'Account Banayein & Live Post Karein!', 'अकाउंट बनाएं और लाइव पोस्ट करें!')}
                   </span>
                 </button>
@@ -958,13 +1088,9 @@ export const JollyTypewriter: React.FC = () => {
                 'Engine: Gemini Se Connected (Live 4-Pillar Analysis)',
                 'इंजन: Gemini से जुड़ा हुआ (लाइव 4-स्तंभ विश्लेषण)'
               )
-            : t(
-                'Engine: Ready',
-                'Engine: Taiyaar',
-                'इंजन: तैयार'
-              )}
+            : t('Engine: Ready', 'Engine: Taiyaar', 'इंजन: तैयार')}
         </span>
-        <span className="font-mono">
+        <span className="hidden sm:inline font-mono">
           {t('Self-Learning Experience Store Active', 'Self-Learning Store Active', 'सेल्फ-लर्निंग सिस्टम सक्रिय')}
         </span>
       </div>

@@ -86,29 +86,23 @@ export const BlissScenicBackdrop: React.FC = () => {
           </g>
         </svg>
 
-        {/* Minecraft-Style Square Pixel Stars (Occasional Shimmer) */}
+        {/* Minecraft-Style Square Pixel Stars (Zero-lag CSS GPU Shimmer) */}
         {SHIMMER_STARS.map((star) => {
           const pxSize = star.size >= 3 ? 4 : star.size >= 2 ? 3 : 2;
           return (
-            <motion.span
+            <span
               key={star.id}
-              animate={{ opacity: [0.28, 0.3, 1, 0.28] }}
-              transition={{
-                repeat: Infinity,
-                duration: 1.8,
-                delay: star.delay,
-                repeatDelay: star.repeatDelay,
-                ease: 'easeInOut',
-              }}
-              className="absolute bg-white"
-              style={{
-                left: star.left,
-                top: star.top,
-                width: pxSize,
-                height: pxSize,
-                imageRendering: 'pixelated',
-                boxShadow: pxSize >= 4 ? '0 0 6px rgba(255, 255, 255, 0.85)' : undefined,
-              }}
+              className="pixel-star"
+              style={
+                {
+                  left: star.left,
+                  top: star.top,
+                  width: pxSize,
+                  height: pxSize,
+                  '--star-dur': `${3.2 + star.repeatDelay}s`,
+                  '--star-delay': `${star.delay}s`,
+                } as React.CSSProperties
+              }
             />
           );
         })}

@@ -121,12 +121,40 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <Link to="/auth" className="xp-btn xp-btn-start px-3.5 py-1.5 text-xs">
-              {t('Sign In', 'Sign In Karein', 'साइन इन')}
+            <Link to="/auth" className="xp-btn xp-btn-start px-3 py-1.5 text-xs">
+              {t('Sign In', 'Sign In', 'साइन इन')}
             </Link>
           )}
         </div>
       </div>
+
+      {/* Mobile Phone Quick Navigation Bar (< 768px) */}
+      <nav className="flex items-center justify-around gap-1.5 border-t border-[var(--border-subtle)] bg-[var(--xp-panel-bg)] px-2 py-1.5 md:hidden overflow-x-auto">
+        <Link to="/" className={`${navBtnClass('/')} flex-1 py-1 text-[11px]`}>
+          <span>{t('Home', 'Home', 'होम')}</span>
+        </Link>
+        <Link to="/court" className={`${navBtnClass('/court')} flex-1 py-1 text-[11px]`}>
+          <XpScalesIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{t('Court', 'Adalat', 'अदालत')}</span>
+        </Link>
+        <Link to="/leaderboard" className={`${navBtnClass('/leaderboard')} flex-1 py-1 text-[11px]`}>
+          <XpTrophyIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{t('Lawyers', 'Wakeel', 'वकील')}</span>
+        </Link>
+        {user && (
+          <Link
+            to={user.role === 'lawyer' ? '/lawyer/dashboard' : '/client/dashboard'}
+            className={`${navBtnClass(user.role === 'lawyer' ? '/lawyer/dashboard' : '/client/dashboard')} flex-1 py-1 text-[11px]`}
+          >
+            <XpFolderIcon className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {user.role === 'lawyer'
+                ? t('Chambers', 'Chambers', 'चैंबर')
+                : t('Diary', 'Diary', 'डायरी')}
+            </span>
+          </Link>
+        )}
+      </nav>
     </header>
   );
 };

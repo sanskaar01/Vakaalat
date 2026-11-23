@@ -297,3 +297,63 @@ ${userStory}
     category,
   };
 }
+
+/**
+ * Rapidly translates an already-computed 4-pillar analysis object into the requested
+ * language ('en' | 'hi' | 'hinglish') when the user clicks the language toggle after evaluation.
+ */
+export async function translateComputedAnalysis(
+  analysis: any,
+  targetLanguage: 'en' | 'hi' | 'hinglish'
+): Promise<any> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new GeminiKeyMissingError();
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+  const targetDesc =
+    targetLanguage === 'hi'
+      ? 'clear, natural Devanagari Hindi (हिंदी)'
+      : targetLanguage === 'hinglish'
+      ? 'natural conversational Hinglish (Roman Hindi + English legal terms)'
+      : 'clear, empathetic English';
+
+  const prompt = `Translate all human-facing text fields in the following JSON object into ${targetDesc}.
+RULES:
+1. Keep the EXACT same JSON structure and keys.
+2. Do NOT change "detectedCategory", "totalDharasViolated", "scoreOutOf10", "beyondFirstAid", "level", "url", "searchUrl", or "helpline".
+3. Translate: "suggestedPostTitle", "compassionateValidation", each violation's "title" and "whyItAppliesToYourStory" (keep "code" readable), "jailTime", "finesAndCompensation", "otherRemedies", "explanation", "lawyerRecommendation", "immediateSteps", each portal's "purpose" and "hoverSteps", and each youtube guide's "title" and "trailerText".
+4. Return ONLY valid JSON.
+
+Input JSON:
+${JSON.stringify(analysis)}`;
+
+  for (const modelName of [...new Set(GEMINI_MODEL_CHAIN)]) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        },
+      });
+      const rawText = (response.text || '').trim();
+      if (rawText) {
+        const translated = JSON.parse(rawText);
+        return {
+          ...analysis,
+          ...translated,
+          detectedCategory: analysis.detectedCategory,
+        };
+      }
+    } catch (err: any) {
+      const status = err?.status || err?.code;
+      if (status === 404 || status === 503 || status === 429) continue;
+      throw err;
+    }
+  }
+
+  return analysis;
+}

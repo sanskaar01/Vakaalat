@@ -222,3 +222,31 @@ body {
 .masked-blur:hover {
   filter: blur(0px);
 }
+
+/* GPU-accelerated zero-lag pixel star shimmer */
+@keyframes pixel-shimmer {
+  0%, 75%, 100% {
+    opacity: 0.26;
+  }
+  88% {
+    opacity: 1;
+  }
+}
+
+.pixel-star {
+  position: absolute;
+  background-color: #ffffff;
+  image-rendering: pixelated;
+  will-change: opacity;
+  animation: pixel-shimmer var(--star-dur, 4.5s) ease-in-out var(--star-delay, 0s) infinite;
+}
+
+/* Mobile phone touch & iOS Safari zoom prevention */
+@media (max-width: 640px) {
+  .xp-input {
+    font-size: 16px !important;
+  }
+  .xp-titlebar {
+    padding: 6px 8px;
+  }
+}

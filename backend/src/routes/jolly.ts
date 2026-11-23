@@ -14,6 +14,7 @@ import {
   GeminiKeyMissingError,
   isGeminiConfigured,
   runJollyAssistant,
+  translateComputedAnalysis,
 } from '../services/jollyEngine.js';
 
 export const jollyRouter = Router();
@@ -62,6 +63,20 @@ jollyRouter.get('/history', requireAuth, (req, res) => {
 jollyRouter.post('/revisit-experience', (_req, res) => {
   const summary = distillExperiencePatterns();
   res.json({ ok: true, summary });
+});
+
+jollyRouter.post('/translate-result', optionalAuth, async (req, res) => {
+  const { analysis, language } = req.body || {};
+  if (!analysis || !['en', 'hi', 'hinglish'].includes(language)) {
+    res.status(400).json({ error: 'Valid analysis object and target language are required.' });
+    return;
+  }
+  try {
+    const translated = await translateComputedAnalysis(analysis, language);
+    res.json(translated);
+  } catch (err: any) {
+    res.status(502).json({ error: err?.message || 'Translation failed.' });
+  }
 });
 
 jollyRouter.post('/draft-post', optionalAuth, async (req, res) => {
