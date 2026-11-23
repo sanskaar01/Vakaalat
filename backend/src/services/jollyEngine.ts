@@ -87,9 +87,48 @@ export const ACTIVE_GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-3
 const GEMINI_MODEL_CHAIN = [
   ACTIVE_GEMINI_MODEL,
   'gemini-3.5-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.1-flash-lite',
   'gemini-3.8-flash',
+  'gemini-flash-lite-latest',
   'gemini-flash-latest',
 ];
+
+async function generateWithFailover(
+  ai: GoogleGenAI,
+  contents: string,
+  config: { systemInstruction?: string; responseMimeType?: string; temperature?: number }
+): Promise<{ text: string; modelUsed: string }> {
+  let lastErr: any = null;
+  const models = [...new Set(GEMINI_MODEL_CHAIN)];
+
+  // Try up to 2 passes across the full model chain so temporary 503 spikes on one model never fail the request
+  for (let pass = 0; pass < 2; pass++) {
+    for (const modelName of models) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents,
+          config,
+        });
+        const text = (response.text || '').trim();
+        if (text) {
+          return { text, modelUsed: modelName };
+        }
+      } catch (err: any) {
+        lastErr = err;
+        // Wait 350ms and fail over to the next available Gemini model
+        await new Promise((r) => setTimeout(r, 350));
+        continue;
+      }
+    }
+  }
+
+  throw new Error(
+    'Google Gemini servers are experiencing temporary high traffic across all models. Please click "Help me out" again in a few seconds.'
+  );
+}
 
 export function isGeminiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY?.trim());
@@ -151,44 +190,20 @@ Return ONLY a JSON object with this EXACT structure (no markdown fences, no extr
   }
 }`;
 
-  let rawText = '';
-  let usedModel = ACTIVE_GEMINI_MODEL;
-  let lastErr: any = null;
-
   const learnedHint = getCompactLearnedHint();
   const compactSystem = learnedHint
     ? `${VAKAALAT_SYSTEM_PROMPT}\n\n${learnedHint}`
     : VAKAALAT_SYSTEM_PROMPT;
 
-  for (const modelName of [...new Set(GEMINI_MODEL_CHAIN)]) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: `${buildUserLegalPrompt(userQuery, language)}\n\n${schemaInstruction}`,
-        config: {
-          systemInstruction: compactSystem,
-          responseMimeType: 'application/json',
-          temperature: 0.35,
-        },
-      });
-      rawText = (response.text || '').trim();
-      if (rawText) {
-        usedModel = modelName;
-        break;
-      }
-    } catch (err: any) {
-      lastErr = err;
-      const status = err?.status || err?.code;
-      if (status === 404 || status === 503 || status === 429) {
-        continue;
-      }
-      throw err;
+  const { text: rawText, modelUsed: usedModel } = await generateWithFailover(
+    ai,
+    `${buildUserLegalPrompt(userQuery, language)}\n\n${schemaInstruction}`,
+    {
+      systemInstruction: compactSystem,
+      responseMimeType: 'application/json',
+      temperature: 0.35,
     }
-  }
-
-  if (!rawText) {
-    throw lastErr || new Error('Gemini returned an empty response. Please try again.');
-  }
+  );
 
   let jsonObj: unknown;
   try {
@@ -259,32 +274,10 @@ User's raw story:
 ${userStory}
 """`;
 
-  let rawText = '';
-  let lastErr: any = null;
-
-  for (const modelName of [...new Set(GEMINI_MODEL_CHAIN)]) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.5,
-        },
-      });
-      rawText = (response.text || '').trim();
-      if (rawText) break;
-    } catch (err: any) {
-      lastErr = err;
-      const status = err?.status || err?.code;
-      if (status === 404 || status === 503 || status === 429) continue;
-      throw err;
-    }
-  }
-
-  if (!rawText) {
-    throw lastErr || new Error('Could not draft post right now. Please try again.');
-  }
+  const { text: rawText } = await generateWithFailover(ai, prompt, {
+    responseMimeType: 'application/json',
+    temperature: 0.5,
+  });
 
   const parsed = DraftPostSchema.safeParse(JSON.parse(rawText));
   if (!parsed.success) {
@@ -329,31 +322,18 @@ RULES:
 Input JSON:
 ${JSON.stringify(analysis)}`;
 
-  for (const modelName of [...new Set(GEMINI_MODEL_CHAIN)]) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        },
-      });
-      const rawText = (response.text || '').trim();
-      if (rawText) {
-        const translated = JSON.parse(rawText);
-        return {
-          ...analysis,
-          ...translated,
-          detectedCategory: analysis.detectedCategory,
-        };
-      }
-    } catch (err: any) {
-      const status = err?.status || err?.code;
-      if (status === 404 || status === 503 || status === 429) continue;
-      throw err;
-    }
+  try {
+    const { text: rawText } = await generateWithFailover(ai, prompt, {
+      responseMimeType: 'application/json',
+      temperature: 0.2,
+    });
+    const translated = JSON.parse(rawText);
+    return {
+      ...analysis,
+      ...translated,
+      detectedCategory: analysis.detectedCategory,
+    };
+  } catch {
+    return analysis;
   }
-
-  return analysis;
 }
